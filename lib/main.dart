@@ -1,0 +1,155 @@
+// lib/main.dart
+// Application entry point.
+// Sets up ProviderScope (Riverpod) and go_router with an onboarding-aware
+// initial route.
+//
+// Start-up logic:
+//   • If no connections are saved → show onboarding splash, then AddConnection.
+//   • If at least one connection exists → go straight to /connection (add form)
+//     for CON-01 scope; Browser landing is wired for BRW-01.
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import 'features/connection/connection_provider.dart';
+import 'features/connection/connection_screen.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    const ProviderScope(
+      child: NasAudioPlayerApp(),
+    ),
+  );
+}
+
+// ── Router ────────────────────────────────────────────────────────────────────
+
+final _router = GoRouter(
+  initialLocation: '/onboarding',
+  routes: [
+    GoRoute(
+      path: '/onboarding',
+      name: 'onboarding',
+      builder: (context, state) => const _OnboardingPage(),
+    ),
+    GoRoute(
+      path: '/connection',
+      name: 'connection',
+      builder: (context, state) => const ConnectionScreen(),
+    ),
+    GoRoute(
+      path: '/browser',
+      name: 'browser',
+      // BRW-01 and beyond — placeholder until Browser module is implemented
+      builder: (context, state) => const _BrowserPlaceholder(),
+    ),
+  ],
+);
+
+// ── App ───────────────────────────────────────────────────────────────────────
+
+class NasAudioPlayerApp extends StatelessWidget {
+  const NasAudioPlayerApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      title: 'NAS 音乐播放器',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      routerConfig: _router,
+    );
+  }
+}
+
+// ── Onboarding page ───────────────────────────────────────────────────────────
+// Shown when the connection list is empty.
+// While checking the DB it shows a loading indicator; once done either
+// redirects to /browser (connections exist) or stays to show the CTA.
+
+class _OnboardingPage extends ConsumerWidget {
+  const _OnboardingPage();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final listAsync = ref.watch(connectionListProvider);
+
+    return listAsync.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, __) => _onboardingScaffold(context),
+      data: (connections) {
+        if (connections.isNotEmpty) {
+          // Already has connections — skip onboarding and go to browser
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.go('/browser');
+          });
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        return _onboardingScaffold(context);
+      },
+    );
+  }
+
+  Widget _onboardingScaffold(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.storage_outlined, size: 80, color: Colors.deepPurple),
+                const SizedBox(height: 24),
+                Text(
+                  '添加第一个 NAS 连接',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '连接到您的 WebDAV 服务器，即可浏览并播放 NAS 上的音乐。',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                FilledButton.icon(
+                  onPressed: () => context.go('/connection'),
+                  icon: const Icon(Icons.add),
+                  label: const Text('添加连接'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(200, 48),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Browser placeholder (until BRW-01 is implemented) ────────────────────────
+
+class _BrowserPlaceholder extends StatelessWidget {
+  const _BrowserPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('文件浏览器')),
+      body: const Center(child: Text('Browser 模块待实现')),
+    );
+  }
+}

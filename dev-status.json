@@ -7,11 +7,11 @@
           "name": "添加 WebDAV 连接",
           "design_doc": "module-connection.md §3.1",
           "impl_tasks": ["F-007", "F-008", "F-009", "F-010", "F-011", "F-012", "F-013", "F-015"],
-          "impl_status": "pending",
+          "impl_status": "done",
           "test_tasks": ["F-059", "F-060"],
           "test_cases": ["CON-T01", "CON-T02", "CON-T03", "CON-T04", "CON-T05", "CON-T06", "CON-T07", "CON-T08", "CON-T09", "CON-T35", "CON-T36", "CON-T37", "CON-T38", "CON-T39", "CON-T40", "CON-T41"],
-          "test_impl_status": "pending",
-          "test_pass_status": "pending"
+          "test_impl_status": "done",
+          "test_pass_status": "passed"
         },
         "CON-02": {
           "name": "连接验证",
