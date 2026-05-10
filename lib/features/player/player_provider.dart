@@ -128,11 +128,29 @@ Duration skipBackward(Duration current, {int seconds = 15}) {
   return clampSeek(current - Duration(seconds: seconds), current);
 }
 
-/// Configurable seek step in seconds (default 15).
+// ── Seek step persistence (SET-04) ──────────────────────────────────────────
+
+/// SharedPreferences key for the seek step setting.
+const _seekStepPrefsKey = 'seek_step_seconds';
+
+/// Default seek step in seconds.
+const _defaultSeekStep = 15;
+
+/// Returns the seek step stored in [prefs], or [_defaultSeekStep] if not set.
 ///
-/// Can be overridden later by settings.  Currently used by skip-forward
-/// and skip-backward controls.
-final seekStepProvider = StateProvider<int>((ref) => 15);
+/// Pure function — testable without any providers or platform channels.
+int readSeekStep(SharedPreferences? prefs) {
+  if (prefs == null) return _defaultSeekStep;
+  return prefs.getInt(_seekStepPrefsKey) ?? _defaultSeekStep;
+}
+
+/// Configurable seek step in seconds (default 15), read from SharedPreferences.
+///
+/// Used by skip-forward and skip-backward controls.
+final seekStepProvider = StateProvider<int>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return readSeekStep(prefs);
+});
 
 // ── Play mode (PLY-06) ────────────────────────────────────────────────────────────
 

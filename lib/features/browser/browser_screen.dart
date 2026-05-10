@@ -60,6 +60,11 @@ class BrowserScreen extends ConsumerWidget {
                 )
               : null,
           actions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              tooltip: '设置',
+              onPressed: () => context.push('/settings'),
+            ),
             PopupMenuButton<SortOption>(
               icon: const Icon(Icons.sort),
               tooltip: '排序方式',

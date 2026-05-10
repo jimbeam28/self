@@ -516,3 +516,27 @@
 - shouldSave: position >= 5s 才保存；shouldClear: position > duration-10s 删除（视为播完）
 - 进度恢复对话框支持继续/从头播放，5 秒倒计时自动选择继续
 - play_progress 表 UNIQUE(connection_id, file_path) 保证 UPSERT
+
+---
+
+## [2026-05-10 18:35] SET-01 ~ SET-05 - Settings 模块全部功能
+
+**模块**: Settings
+**状态**: ✅ 全部成功 (5/5)
+
+### 实现文件
+- `lib/features/settings/settings_provider.dart` — 主题/步长/速度设置 Provider（新建）
+- `lib/features/settings/settings_screen.dart` — 设置页面：播放/外观/连接/关于四分区（新建）
+- `lib/features/settings/about_screen.dart` — 关于页面：应用名/版本/开源许可（新建）
+- `lib/main.dart` — 添加 /settings、/about 路由，主题模式集成
+- `lib/features/browser/browser_screen.dart` — AppBar 添加设置按钮
+- `lib/features/player/player_provider.dart` — seekStepProvider 改为读 SharedPreferences
+
+### 测试文件
+- `test/features/settings/settings_test.dart` — 测试用例 57 个（SET-T01 ~ SET-T34 + 边界测试）
+
+### 测试结果
+- 通过: 535 / 总计: 535
+- Settings 模块全部 5 个功能实现完成
+- **全部 6 个模块 35 个功能实现完成**
+

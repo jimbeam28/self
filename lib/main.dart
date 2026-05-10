@@ -20,6 +20,9 @@ import 'features/connection/connection_list_screen.dart';
 import 'features/connection/connection_screen.dart';
 import 'features/browser/browser_screen.dart';
 import 'features/player/player_screen.dart';
+import 'features/settings/settings_screen.dart';
+import 'features/settings/about_screen.dart';
+import 'features/settings/settings_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,22 +75,42 @@ final _router = GoRouter(
       name: 'player',
       builder: (context, state) => const PlayerScreen(),
     ),
+    GoRoute(
+      path: '/settings',
+      name: 'settings',
+      builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/about',
+      name: 'about',
+      builder: (context, state) => const AboutScreen(),
+    ),
   ],
 );
 
 // ── App ───────────────────────────────────────────────────────────────────────
 
-class NasAudioPlayerApp extends StatelessWidget {
+class NasAudioPlayerApp extends ConsumerWidget {
   const NasAudioPlayerApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+
     return MaterialApp.router(
       title: 'NAS 音乐播放器',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+      ),
+      themeMode: themeMode,
       routerConfig: _router,
     );
   }
