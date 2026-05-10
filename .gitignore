@@ -17,3 +17,5 @@ android/local.properties
 .DS_Store
 Thumbs.db
 
+# Local agent guidance
+AGENTS.md
