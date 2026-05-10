@@ -465,3 +465,27 @@
 - 迷你播放器仅在播放队列非空时显示
 - 点击主体区域导航到完整播放器页面
 - 进度条使用 LinearProgressIndicator 2px 高度
+
+---
+
+## [2026-05-10 18:22] TMR-01 ~ TMR-05 - Timer 模块全部功能
+
+**模块**: Timer
+**状态**: ✅ 全部成功 (5/5)
+
+### 实现文件
+- `lib/core/services/timer_service.dart` — 纯逻辑定时状态机（新建）
+- `lib/features/timer/timer_provider.dart` — Riverpod Provider 封装（新建）
+- `lib/features/timer/widgets/timer_button.dart` — 定时按钮 UI 和 BottomSheet（新建）
+
+### 测试文件
+- `test/features/timer/timer_test.dart` — 测试用例 46 个（TMR-T01 ~ TMR-T29 + Widget 测试）
+
+### 测试结果
+- 通过: 447 / 总计: 447
+
+### 备注
+- 定时模式: 5/10/15 分钟固定时长 + 播完当前
+- formatRemaining: >60s→X分钟, <=60s→Xs, afterCurrent→null, 无定时→null
+- cancel 幂等，到期后 pause 触发，cancel 后到期不触发
+- Timer 模块全部 5 个功能一次性实现完成

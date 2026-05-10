@@ -232,51 +232,51 @@
           "name": "设置固定时长定时",
           "design_doc": "module-timer.md §3.1",
           "impl_tasks": ["F-049"],
-          "impl_status": "pending",
+          "impl_status": "done",
           "test_tasks": ["F-065", "F-066"],
           "test_cases": ["TMR-T01", "TMR-T02", "TMR-T03", "TMR-T04", "TMR-T26", "TMR-T28"],
-          "test_impl_status": "pending",
-          "test_pass_status": "pending"
+          "test_impl_status": "done",
+          "test_pass_status": "passed"
         },
         "TMR-02": {
           "name": "设置播完当前音频后停止",
           "design_doc": "module-timer.md §3.2",
           "impl_tasks": ["F-050"],
-          "impl_status": "pending",
+          "impl_status": "done",
           "test_tasks": ["F-065", "F-066"],
           "test_cases": ["TMR-T05", "TMR-T06", "TMR-T07", "TMR-T08", "TMR-T25"],
-          "test_impl_status": "pending",
-          "test_pass_status": "pending"
+          "test_impl_status": "done",
+          "test_pass_status": "passed"
         },
         "TMR-03": {
           "name": "定时倒计时显示",
           "design_doc": "module-timer.md §3.3",
           "impl_tasks": ["F-052"],
-          "impl_status": "pending",
+          "impl_status": "done",
           "test_tasks": ["F-065", "F-066"],
           "test_cases": ["TMR-T09", "TMR-T10", "TMR-T11", "TMR-T12", "TMR-T13", "TMR-T14", "TMR-T15", "TMR-T23", "TMR-T24"],
-          "test_impl_status": "pending",
-          "test_pass_status": "pending"
+          "test_impl_status": "done",
+          "test_pass_status": "passed"
         },
         "TMR-04": {
           "name": "取消定时",
           "design_doc": "module-timer.md §3.4",
           "impl_tasks": ["F-051"],
-          "impl_status": "pending",
+          "impl_status": "done",
           "test_tasks": ["F-065", "F-066"],
           "test_cases": ["TMR-T16", "TMR-T17", "TMR-T18", "TMR-T27", "TMR-T29"],
-          "test_impl_status": "pending",
-          "test_pass_status": "pending"
+          "test_impl_status": "done",
+          "test_pass_status": "passed"
         },
         "TMR-05": {
           "name": "定时到期执行停止",
           "design_doc": "module-timer.md §3.5",
           "impl_tasks": ["F-049", "F-050"],
-          "impl_status": "pending",
+          "impl_status": "done",
           "test_tasks": ["F-065", "F-066"],
           "test_cases": ["TMR-T19", "TMR-T20", "TMR-T21", "TMR-T22"],
-          "test_impl_status": "pending",
-          "test_pass_status": "pending"
+          "test_impl_status": "done",
+          "test_pass_status": "passed"
         }
       }
     },
