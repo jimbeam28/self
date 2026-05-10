@@ -159,3 +159,25 @@
 - PROPFIND XML 207 响应手动解析（未引入 xml 包）
 - 支持 8 种音频格式过滤和分类（music/audiobook）
 - 文件名特殊字符（空格、中文、括号）正确解析
+
+---
+
+## [2026-05-10 16:58] BRW-02 - 目录导航（进入/返回）
+
+**模块**: Browser
+**状态**: ✅ 成功
+
+### 实现文件
+- `lib/features/browser/widgets/breadcrumb_bar.dart` — 面包屑导航栏：路径展示、溢出折叠、点击跳转（新建）
+- `lib/features/browser/browser_screen.dart` — 集成 BreadcrumbBar，PopScope 拦截返回键，目录点击导航
+
+### 测试文件
+- `test/features/browser/brw_02_test.dart` — 测试用例 12 个（BRW-T10 ~ BRW-T17）
+
+### 测试结果
+- 通过: 68 / 总计: 68（Connection 43 + Browser 25）
+
+### 备注
+- computeBreadcrumbLayout 作为纯函数导出，便于单元测试
+- 面包屑始终显示根目录和尽可能多的右侧段，中间段折叠为 "..."+ 弹出菜单
+- NavigationStackNotifier 在 BRW-01 中已实现，BRW-02 增强了 UI 层

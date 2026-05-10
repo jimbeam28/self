@@ -371,9 +371,9 @@ void main() {
       // Single pump — does not settle because the future hasn't completed
       await tester.pump();
 
-      // The path bar should show "/"
-      expect(find.text('/'), findsOneWidget,
-          reason: '应显示当前路径 /');
+      // The breadcrumb bar should show "根目录" for the root path
+      expect(find.text('根目录'), findsOneWidget,
+          reason: '应显示根目录标识');
 
       // No actual file/directory tiles rendered
       expect(find.byType(ListTile), findsNothing,

@@ -1,5 +1,5 @@
 // lib/features/browser/browser_screen.dart
-// Full UI for BRW-01: directory listing.
+// Full UI for BRW-01: directory listing + BRW-02: directory navigation.
 //
 // States:
 //   - Loading  → skeleton / spinner
@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/webdav_client.dart';
 import '../../shared/models/nas_file.dart';
 import 'browser_provider.dart';
+import 'widgets/breadcrumb_bar.dart';
 import 'widgets/file_list_item.dart';
 
 class BrowserScreen extends ConsumerWidget {
@@ -25,72 +26,60 @@ class BrowserScreen extends ConsumerWidget {
 
     final contentsAsync = ref.watch(directoryContentsProvider(currentPath));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('文件浏览器'),
-        centerTitle: true,
-        leading: navStack.length > 1
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                tooltip: '返回上级',
-                onPressed: () {
-                  ref.read(navigationStackProvider.notifier).pop();
-                },
-              )
-            : null,
-      ),
-      body: Column(
-        children: [
-          // Current path indicator
-          _PathBar(path: currentPath),
-          const Divider(height: 1),
+    return PopScope(
+      canPop: navStack.length <= 1,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          ref.read(navigationStackProvider.notifier).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('文件浏览器'),
+          centerTitle: true,
+          leading: navStack.length > 1
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  tooltip: '返回上级',
+                  onPressed: () {
+                    ref.read(navigationStackProvider.notifier).pop();
+                  },
+                )
+              : null,
+        ),
+        body: Column(
+          children: [
+            // Breadcrumb navigation bar (BRW-02)
+            const BreadcrumbBar(),
+            const Divider(height: 1),
 
-          // Directory contents
-          Expanded(
-            child: contentsAsync.when(
-              loading: () => const _LoadingView(),
-              error: (error, _) => _ErrorView(
-                message: error is WebDavException
-                    ? error.message
-                    : '加载失败：$error',
-                onRetry: () {
-                  ref.invalidate(directoryContentsProvider(currentPath));
+            // Directory contents
+            Expanded(
+              child: contentsAsync.when(
+                loading: () => const _LoadingView(),
+                error: (error, _) => _ErrorView(
+                  message: error is WebDavException
+                      ? error.message
+                      : '加载失败：$error',
+                  onRetry: () {
+                    ref.invalidate(directoryContentsProvider(currentPath));
+                  },
+                ),
+                data: (files) {
+                  if (files.isEmpty) {
+                    return const _EmptyView();
+                  }
+                  return _FileList(
+                    files: files,
+                    onDirectoryTap: (dirPath) {
+                      ref.read(navigationStackProvider.notifier).push(dirPath);
+                    },
+                  );
                 },
               ),
-              data: (files) {
-                if (files.isEmpty) {
-                  return const _EmptyView();
-                }
-                return _FileList(files: files);
-              },
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Path bar ────────────────────────────────────────────────────────────────────
-
-class _PathBar extends StatelessWidget {
-  final String path;
-
-  const _PathBar({required this.path});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Text(
-        path,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontFamily: 'monospace',
-            ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+          ],
+        ),
       ),
     );
   }
@@ -211,8 +200,9 @@ class _EmptyView extends StatelessWidget {
 
 class _FileList extends StatelessWidget {
   final List<NasFile> files;
+  final void Function(String dirPath)? onDirectoryTap;
 
-  const _FileList({required this.files});
+  const _FileList({required this.files, this.onDirectoryTap});
 
   @override
   Widget build(BuildContext context) {
@@ -225,9 +215,9 @@ class _FileList extends StatelessWidget {
         if (file.isDirectory) {
           return DirectoryListTile(
             file: file,
-            onTap: (_) {
-              // Directory navigation (BRW-02) — placeholder for now
-            },
+            onTap: onDirectoryTap != null
+                ? (_) => onDirectoryTap!(file.path)
+                : null,
           );
         }
         return AudioFileListTile(
