@@ -21,3 +21,25 @@
 
 ### 备注
 - 为完成测试运行，将 `pubspec.yaml` 中 `sqflite_ffi` 更正为 `sqflite_common_ffi`。
+
+---
+
+## [2026-05-10 16:20] CON-02 - 连接验证
+
+**模块**: Connection
+**状态**: ✅ 成功
+
+### 实现文件
+- `lib/features/connection/connection_provider.dart` — 添加重入保护（防重复点击）和 startupValidationProvider（启动自动验证）
+- `lib/main.dart` — OnboardingPage 集成 startupValidationProvider，根据验证结果路由跳转
+- `lib/features/connection/connection_screen.dart` — 显示启动验证失败的警告横幅
+
+### 测试文件
+- `test/features/connection/con_02_test.dart` — 测试用例 8 个（CON-T10 ~ CON-T17）
+
+### 测试结果
+- 通过: 8 / 总计: 8
+
+### 备注
+- F-009 和 F-010 已由 CON-01 实现，CON-02 补充了重入保护和启动自动验证逻辑
+- 启动自动验证在 OnboardingPage 中触发，验证失败时重定向到连接页面供用户重新配置

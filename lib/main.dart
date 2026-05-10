@@ -85,12 +85,42 @@ class _OnboardingPage extends ConsumerWidget {
       error: (_, __) => _onboardingScaffold(context),
       data: (connections) {
         if (connections.isNotEmpty) {
-          // Already has connections — skip onboarding and go to browser
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.go('/browser');
-          });
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          // Watch startup validation to trigger auto-validation (CON-T15 / CON-T16).
+          // If validation fails (e.g. 401), redirect to /connection for reconfiguration
+          // instead of /browser.
+          final validationAsync = ref.watch(startupValidationProvider);
+          // We need to let the validation resolve before deciding the redirect.
+          return validationAsync.when(
+            loading: () => const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
+            error: (_, __) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                context.go('/connection');
+              });
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            },
+            data: (result) {
+              if (result != null && !result.isSuccess) {
+                // CON-T16: validation failed — redirect to connection screen
+                // so user can reconfigure. Pass the error message as extra.
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  context.go('/connection');
+                });
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              // CON-T15: validation succeeded (or no active connection) — go to browser
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                context.go('/browser');
+              });
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            },
           );
         }
         return _onboardingScaffold(context);

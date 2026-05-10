@@ -71,12 +71,16 @@ class ConnectionValidatorNotifier
   ConnectionValidatorNotifier(this._client) : super(const ValidationIdle());
 
   /// Performs the WebDAV PROPFIND validation.
+  ///
+  /// Includes a re-entry guard: if a validation is already in-flight the call
+  /// is silently ignored (CON-T17).
   Future<void> validate({
     required String url,
     required String username,
     required String password,
     String basePath = '/',
   }) async {
+    if (state is ValidationLoading) return; // re-entry guard
     state = const ValidationLoading();
     final normalisedUrl = normaliseWebDavUrl(url);
     final result = await _client.validate(
@@ -99,6 +103,41 @@ final connectionValidatorProvider = StateNotifierProvider<
     ConnectionValidatorNotifier, ConnectionValidationState>((ref) {
   final client = ref.watch(webDavClientProvider);
   return ConnectionValidatorNotifier(client);
+});
+
+// ── Startup auto-validation ────────────────────────────────────────────────────
+//
+// Watches [activeConnectionProvider] and automatically validates the active
+// connection whenever it resolves to a non-null value.  This covers both
+// app-startup (CON-T15 / CON-T16) and connection-switch scenarios.
+//
+// Returns null when no active connection exists, otherwise the raw validation
+// result from the WebDAV client.
+//
+// Usage: watch this provider from an app-shell-level widget that can react to
+// [ConnectionHealthError] by prompting the user to reconfigure.
+
+final startupValidationProvider =
+    FutureProvider<WebDavValidationResult?>((ref) async {
+  final activeConn = await ref.watch(activeConnectionProvider.future);
+  if (activeConn == null) return null;
+
+  // Read the password from secure storage
+  final storage = ref.watch(secureStorageProvider);
+  final passwordKey = 'connection_password_${activeConn.id}';
+  final password = await storage.read(key: passwordKey);
+  if (password == null || password.isEmpty) {
+    return WebDavValidationResult.authError();
+  }
+
+  // Run validation silently (no connectionValidatorProvider state changes)
+  final client = ref.watch(webDavClientProvider);
+  return client.validate(
+    url: activeConn.url,
+    username: activeConn.username,
+    password: password,
+    basePath: activeConn.basePath,
+  );
 });
 
 // ── Save connection use-case ──────────────────────────────────────────────────

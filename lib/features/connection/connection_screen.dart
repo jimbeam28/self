@@ -33,6 +33,18 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
     final isValidated = validationState is ValidationSuccess;
     final isValidating = validationState is ValidationLoading;
 
+    // Check startup validation result for CON-T15 / CON-T16.
+    // When the app redirects here because the saved connection is broken,
+    // this banner informs the user why.
+    final startupResult = ref.watch(startupValidationProvider);
+    final startupErrorMsg = startupResult.maybeWhen(
+      data: (result) {
+        if (result != null && !result.isSuccess) return result.message;
+        return null;
+      },
+      orElse: () => null,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('添加 WebDAV 连接'),
@@ -44,6 +56,17 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Startup validation error banner (CON-T16)
+              if (startupErrorMsg != null)
+                _Banner(
+                  icon: Icons.warning_amber_outlined,
+                  message: '已保存连接验证失败：$startupErrorMsg',
+                  backgroundColor: Colors.orange.shade50,
+                  foregroundColor: Colors.orange.shade900,
+                  iconColor: Colors.orange,
+                ),
+              if (startupErrorMsg != null) const SizedBox(height: 16),
+
               // Form fields
               ConnectionForm(controller: _formController),
               const SizedBox(height: 24),

@@ -17,11 +17,11 @@
           "name": "连接验证",
           "design_doc": "module-connection.md §3.2",
           "impl_tasks": ["F-009", "F-010"],
-          "impl_status": "pending",
+          "impl_status": "done",
           "test_tasks": ["F-059"],
           "test_cases": ["CON-T10", "CON-T11", "CON-T12", "CON-T13", "CON-T14", "CON-T15", "CON-T16", "CON-T17"],
-          "test_impl_status": "pending",
-          "test_pass_status": "pending"
+          "test_impl_status": "done",
+          "test_pass_status": "passed"
         },
         "CON-03": {
           "name": "连接配置持久化",
