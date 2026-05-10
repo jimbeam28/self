@@ -70,7 +70,7 @@ final _router = GoRouter(
     GoRoute(
       path: '/player',
       name: 'player',
-      builder: (context, state) => const PlayerPlaceholder(),
+      builder: (context, state) => const PlayerScreen(),
     ),
   ],
 );

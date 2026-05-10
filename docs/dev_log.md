@@ -290,3 +290,27 @@
 - 排序选项持久化到 SharedPreferences，首次启动默认名称升序
 - 目录始终在文件前面，不论排序方式
 - Browser 模块全部 7 个功能实现完成
+
+---
+
+## [2026-05-10 17:35] PLY-01 - 音频流式播放
+
+**模块**: Player
+**状态**: ✅ 成功
+
+### 实现文件
+- `lib/core/services/audio_source_builder.dart` — WebDAV 音频源构建：Basic Auth、URL 编码（新建）
+- `lib/features/player/player_provider.dart` — AudioPlayer Provider + PlayerLoadState（新建）
+- `lib/features/player/player_screen.dart` — 完整播放器页面：播放/暂停、进度、错误处理
+- `lib/main.dart` — /player 路由更新为 PlayerScreen
+
+### 测试文件
+- `test/features/player/ply_01_test.dart` — 测试用例 29 个（PLY-T01 ~ PLY-T07 + helpers）
+
+### 测试结果
+- 通过: 131 / 总计: 131（Connection 43 + Browser 59 + Player 29）
+
+### 备注
+- AudioSource 通过 just_audio 的 AudioSource.uri 自定义 headers 实现 Basic Auth
+- 路径段级别 URL 编码支持空格、中文、特殊字符
+- PlayerLoadState 状态机：idle → loading → ready | error（含 auth 错误标记）

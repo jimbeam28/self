@@ -147,11 +147,11 @@
           "name": "音频流式播放",
           "design_doc": "module-player.md §3.1",
           "impl_tasks": ["F-027", "F-028"],
-          "impl_status": "pending",
+          "impl_status": "done",
           "test_tasks": ["F-063"],
           "test_cases": ["PLY-T01", "PLY-T02", "PLY-T03", "PLY-T04", "PLY-T05", "PLY-T06", "PLY-T07"],
-          "test_impl_status": "pending",
-          "test_pass_status": "pending"
+          "test_impl_status": "done",
+          "test_pass_status": "passed"
         },
         "PLY-02": {
           "name": "基础播放控制",
