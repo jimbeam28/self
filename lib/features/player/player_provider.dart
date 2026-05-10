@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 
+import '../../shared/models/play_queue.dart';
 import 'background_playback.dart';
 
 // ── AudioPlayer instance ───────────────────────────────────────────────────────
@@ -130,6 +131,60 @@ Duration skipBackward(Duration current, {int seconds = 15}) {
 /// Can be overridden later by settings.  Currently used by skip-forward
 /// and skip-backward controls.
 final seekStepProvider = StateProvider<int>((ref) => 15);
+
+// ── Play mode (PLY-06) ────────────────────────────────────────────────────────────
+
+/// The current playback mode for the audio queue.
+///
+/// Defaults to [PlayMode.sequential].  The user can cycle through modes
+/// via a button on the player screen.
+final playModeProvider = StateProvider<PlayMode>((ref) => PlayMode.sequential);
+
+/// Returns a function that cycles [playModeProvider] to the next mode.
+///
+/// The modes cycle in order:
+///   sequential → repeatOne → repeatAll → shuffle → sequential …
+///
+/// Tapping the play-mode button on the player screen calls this function.
+final nextPlayModeProvider = Provider<PlayMode Function()>((ref) {
+  return () {
+    final current = ref.read(playModeProvider);
+    final next = PlayMode.values[(current.index + 1) % PlayMode.values.length];
+    ref.read(playModeProvider.notifier).state = next;
+    return next;
+  };
+});
+
+/// Returns the icon that visually represents the given [PlayMode].
+///
+/// Each mode has a distinct Material icon so the user can identify the
+/// current playback mode at a glance (PLY-T61).
+IconData iconForPlayMode(PlayMode mode) {
+  switch (mode) {
+    case PlayMode.sequential:
+      return Icons.playlist_play;
+    case PlayMode.repeatOne:
+      return Icons.repeat_one;
+    case PlayMode.repeatAll:
+      return Icons.repeat;
+    case PlayMode.shuffle:
+      return Icons.shuffle;
+  }
+}
+
+/// Returns a human-readable Chinese label for the given [PlayMode].
+String labelForPlayMode(PlayMode mode) {
+  switch (mode) {
+    case PlayMode.sequential:
+      return '顺序播放';
+    case PlayMode.repeatOne:
+      return '单曲循环';
+    case PlayMode.repeatAll:
+      return '列表循环';
+    case PlayMode.shuffle:
+      return '随机播放';
+  }
+}
 
 // ── Speed options ───────────────────────────────────────────────────────────────
 

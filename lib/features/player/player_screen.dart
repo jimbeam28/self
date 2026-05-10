@@ -15,6 +15,7 @@ import 'package:just_audio/just_audio.dart';
 
 import '../../core/network/webdav_client.dart';
 import '../../core/services/audio_source_builder.dart';
+import '../../shared/models/play_queue.dart';
 import '../browser/browser_provider.dart';
 import '../connection/connection_provider.dart';
 import 'player_provider.dart';
@@ -206,6 +207,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
           const SizedBox(height: 16),
           // Speed control
           const _SpeedControl(),
+          const SizedBox(height: 16),
+          const _PlayModeControl(),
           const Spacer(),
         ],
       ),
@@ -563,6 +566,31 @@ class _SpeedControl extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// ── Play Mode Control (PLY-06) ──────────────────────────────────────────────────
+
+/// Play mode toggle button that cycles through modes and shows the
+/// corresponding icon.
+///
+/// Modes cycle: sequential → repeatOne → repeatAll → shuffle → sequential …
+class _PlayModeControl extends ConsumerWidget {
+  const _PlayModeControl();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(playModeProvider);
+    final nextMode = ref.watch(nextPlayModeProvider);
+
+    return OutlinedButton.icon(
+      onPressed: nextMode,
+      icon: Icon(iconForPlayMode(mode), size: 20),
+      label: Text(labelForPlayMode(mode)),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
     );
   }
 }

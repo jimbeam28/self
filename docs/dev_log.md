@@ -400,3 +400,24 @@
 - nextIndex/previousIndex 支持 seeded Random 用于确定性测试
 - PlayQueue.toMap/fromMap 支持应用重启时队列恢复
 - repeatOne 模式下 startPositionMs 重置为 0
+
+---
+
+## [2026-05-10 18:04] PLY-06 - 播放模式切换
+
+**模块**: Player
+**状态**: ✅ 成功
+
+### 实现文件
+- `lib/features/player/player_provider.dart` — 添加 playModeProvider 和 nextPlayModeProvider
+- `lib/features/player/player_screen.dart` — 添加 _PlayModeControl 模式循环按钮
+
+### 测试文件
+- `test/features/player/ply_06_test.dart` — 测试用例 12 个（PLY-T38 ~ PLY-T42 + PLY-T61）
+
+### 测试结果
+- 通过: 346 / 总计: 346
+
+### 备注
+- 模式循环顺序: sequential → repeatOne → repeatAll → shuffle → sequential
+- iconForPlayMode/labelForPlayMode 纯函数映射图标和中文标签
