@@ -167,11 +167,11 @@
           "name": "后台播放",
           "design_doc": "module-player.md §3.3",
           "impl_tasks": ["F-032"],
-          "impl_status": "pending",
+          "impl_status": "done",
           "test_tasks": ["F-063"],
           "test_cases": ["PLY-T20", "PLY-T21", "PLY-T22", "PLY-T23"],
-          "test_impl_status": "pending",
-          "test_pass_status": "pending"
+          "test_impl_status": "done",
+          "test_pass_status": "passed"
         },
         "PLY-04": {
           "name": "锁屏/通知栏媒体控件",

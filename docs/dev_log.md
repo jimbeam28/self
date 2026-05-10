@@ -336,3 +336,25 @@
 - 快进/快退逻辑使用纯函数实现，便于单元测试
 - 进度滑块处理拖动状态避免流抖动
 - 速度选择器支持 6 个档位（0.5x ~ 2.0x）
+
+---
+
+## [2026-05-10 17:49] PLY-03 - 后台播放
+
+**模块**: Player
+**状态**: ✅ 成功
+
+### 实现文件
+- `lib/features/player/background_playback.dart` — 后台播放状态机模型（新建）
+- `lib/features/player/player_provider.dart` — 添加 BackgroundPlaybackNotifier 和生命周期处理
+
+### 测试文件
+- `test/features/player/ply_03_test.dart` — 测试用例 55 个（PLY-T20 ~ PLY-T23 + 音频焦点）
+
+### 测试结果
+- 通过: 257 / 总计: 257（Connection 43 + Browser 59 + Player 155）
+
+### 备注
+- BackgroundPlaybackConfig 纯函数模型：生命周期转换、通知栏控制、音频焦点
+- shouldContinueInBackground 纯净函数决定生命周期行为
+- 不依赖 audio_service 原生平台支持即可完整测试逻辑层
