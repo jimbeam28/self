@@ -85,3 +85,28 @@
 
 ### 备注
 - 连接列表页面为 CON-05/CON-06 的编辑/删除功能预留了 UI 结构
+
+---
+
+## [2026-05-10 16:37] CON-05 - 编辑连接配置
+
+**模块**: Connection
+**状态**: ✅ 成功
+
+### 实现文件
+- `lib/features/connection/connection_edit_screen.dart` — 编辑连接页面（新建）
+- `lib/features/connection/connection_provider.dart` — 添加 ConnectionUpdater
+- `lib/features/connection/widgets/connection_form.dart` — 支持预填初始值和可选密码
+- `lib/features/connection/connection_list_screen.dart` — 添加弹出菜单（编辑/删除）
+- `lib/main.dart` — 添加 /connections/edit/:id 路由
+
+### 测试文件
+- `test/features/connection/con_05_test.dart` — 测试用例 4 个（CON-T28 ~ CON-T30 + 密码更新）
+
+### 测试结果
+- 通过: 38 / 总计: 38（全部 Connection 模块测试）
+
+### 备注
+- 修改 URL/用户名/密码/基础路径后必须重新验证才能保存
+- 仅修改显示名称无需重新验证
+- ConnectionForm 支持 passwordRequired=false 用于编辑模式（留空保持原密码）

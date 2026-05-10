@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../shared/models/connection_config.dart';
 import 'connection_provider.dart';
@@ -154,18 +155,54 @@ class _ConnectionListView extends StatelessWidget {
               ],
             ],
           ),
-          subtitle: Text(
-            conn.url,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey.shade600,
-            ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                conn.url,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              Text(
+                '${conn.username}  ${conn.basePath}',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              ),
+            ],
           ),
-          trailing: Text(
-            '${conn.username}  ${conn.basePath}',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+          trailing: PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
+            onSelected: (value) {
+              if (value == 'edit') {
+                context.push('/connections/edit/${conn.id}');
+              }
+              // CON-06: delete action will be wired here
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit_outlined, size: 20),
+                    SizedBox(width: 8),
+                    Text('编辑'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline, size: 20),
+                    SizedBox(width: 8),
+                    Text('删除'),
+                  ],
+                ),
+              ),
+            ],
           ),
           onTap: isActive ? null : () => onSwitch(conn.id!),
         );

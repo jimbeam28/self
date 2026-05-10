@@ -199,3 +199,37 @@ final connectionSaverProvider = Provider<ConnectionSaver>((ref) {
     ref.watch(secureStorageProvider),
   );
 });
+
+// ── Update connection use-case ──────────────────────────────────────────────────
+
+/// Encapsulates updating an existing connection in the DB and secure storage.
+class ConnectionUpdater {
+  final ConnectionDao _dao;
+  final FlutterSecureStorage _storage;
+
+  ConnectionUpdater(this._dao, this._storage);
+
+  /// Updates [config] in the database.
+  ///
+  /// If [password] is non-null and non-empty it is written to secure storage;
+  /// otherwise the existing stored password is left untouched.
+  Future<void> update({
+    required ConnectionConfig config,
+    String? password,
+  }) async {
+    final permanentKey = 'connection_password_${config.id}';
+
+    if (password != null && password.isNotEmpty) {
+      await _storage.write(key: permanentKey, value: password);
+    }
+
+    await _dao.update(config, passwordKey: permanentKey);
+  }
+}
+
+final connectionUpdaterProvider = Provider<ConnectionUpdater>((ref) {
+  return ConnectionUpdater(
+    ref.watch(connectionDaoProvider),
+    ref.watch(secureStorageProvider),
+  );
+});

@@ -24,6 +24,15 @@ class ConnectionFormController {
 
   bool validate() => _state._formKey.currentState?.validate() ?? false;
 
+  /// Resets all text fields to empty.
+  void clear() {
+    _state._urlController.clear();
+    _state._usernameController.clear();
+    _state._passwordController.clear();
+    _state._nameController.clear();
+    _state._basePathController.text = '/';
+  }
+
   void dispose() {} // lifecycle managed by the State
 }
 
@@ -31,8 +40,25 @@ class ConnectionFormController {
 
 class ConnectionForm extends StatefulWidget {
   final ConnectionFormController controller;
+  final String? initialUrl;
+  final String? initialUsername;
+  final String? initialPassword;
+  final String? initialName;
+  final String? initialBasePath;
+  final bool passwordRequired;
+  final VoidCallback? onFieldChanged;
 
-  const ConnectionForm({super.key, required this.controller});
+  const ConnectionForm({
+    super.key,
+    required this.controller,
+    this.initialUrl,
+    this.initialUsername,
+    this.initialPassword,
+    this.initialName,
+    this.initialBasePath,
+    this.passwordRequired = true,
+    this.onFieldChanged,
+  });
 
   @override
   State<ConnectionForm> createState() => _ConnectionFormState();
@@ -41,21 +67,36 @@ class ConnectionForm extends StatefulWidget {
 class _ConnectionFormState extends State<ConnectionForm> {
   final _formKey = GlobalKey<FormState>();
 
-  final _urlController = TextEditingController();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _nameController = TextEditingController();
-  final _basePathController = TextEditingController(text: '/');
+  late final TextEditingController _urlController;
+  late final TextEditingController _usernameController;
+  late final TextEditingController _passwordController;
+  late final TextEditingController _nameController;
+  late final TextEditingController _basePathController;
 
   bool _obscurePassword = true;
 
   @override
   void initState() {
     super.initState();
+    _urlController = TextEditingController(text: widget.initialUrl);
+    _usernameController = TextEditingController(text: widget.initialUsername);
+    _passwordController = TextEditingController(text: widget.initialPassword);
+    _nameController = TextEditingController(text: widget.initialName);
+    _basePathController =
+        TextEditingController(text: widget.initialBasePath ?? '/');
+
     widget.controller._attach(this);
 
     // Auto-fill display name from URL hostname when user leaves URL field
     _urlController.addListener(_onUrlChanged);
+
+    // Notify parent on field changes (used by edit screen to reset validator)
+    if (widget.onFieldChanged != null) {
+      _urlController.addListener(widget.onFieldChanged!);
+      _usernameController.addListener(widget.onFieldChanged!);
+      _passwordController.addListener(widget.onFieldChanged!);
+      _basePathController.addListener(widget.onFieldChanged!);
+    }
   }
 
   void _onUrlChanged() {
@@ -107,9 +148,6 @@ class _ConnectionFormState extends State<ConnectionForm> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Form(
       key: _formKey,
       child: Column(
@@ -154,7 +192,7 @@ class _ConnectionFormState extends State<ConnectionForm> {
           TextFormField(
             controller: _passwordController,
             decoration: InputDecoration(
-              labelText: '密码 *',
+              labelText: widget.passwordRequired ? '密码 *' : '密码（留空保持不变）',
               prefixIcon: const Icon(Icons.lock_outline),
               border: const OutlineInputBorder(),
               suffixIcon: IconButton(
@@ -171,7 +209,13 @@ class _ConnectionFormState extends State<ConnectionForm> {
             obscureText: _obscurePassword,
             textInputAction: TextInputAction.next,
             autocorrect: false,
-            validator: (v) => _validateRequired(v, '密码'),
+            validator: (v) {
+              if (!widget.passwordRequired &&
+                  (v == null || v.trim().isEmpty)) {
+                return null;
+              }
+              return _validateRequired(v, '密码');
+            },
           ),
           const SizedBox(height: 16),
 
