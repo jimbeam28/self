@@ -442,3 +442,26 @@
 - currentSpeedProvider 使用 ref.read 获取默认速度，修改默认不影响当前播放
 - 新容器（模拟新文件）自动获取最新默认速度
 - isValidSpeed 使用 0.01 浮点容差匹配 6 个速度档位
+
+---
+
+## [2026-05-10 18:15] PLY-08 - 迷你播放器
+
+**模块**: Player
+**状态**: ✅ 成功
+
+### 实现文件
+- `lib/features/player/widgets/mini_player_bar.dart` — 迷你播放器条组件（新建）
+- `lib/features/browser/browser_screen.dart` — 底部集成 MiniPlayerBar
+
+### 测试文件
+- `test/features/player/ply_08_test.dart` — 测试用例 19 个（PLY-T48 ~ PLY-T54）
+
+### 测试结果
+- 通过: 401 / 总计: 401
+- Player 模块全部 8 个功能实现完成
+
+### 备注
+- 迷你播放器仅在播放队列非空时显示
+- 点击主体区域导航到完整播放器页面
+- 进度条使用 LinearProgressIndicator 2px 高度

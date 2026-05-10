@@ -217,11 +217,11 @@
           "name": "迷你播放器",
           "design_doc": "module-player.md §3.8",
           "impl_tasks": ["F-039"],
-          "impl_status": "pending",
+          "impl_status": "done",
           "test_tasks": ["F-064"],
           "test_cases": ["PLY-T48", "PLY-T49", "PLY-T50", "PLY-T51", "PLY-T52", "PLY-T53", "PLY-T54"],
-          "test_impl_status": "pending",
-          "test_pass_status": "pending"
+          "test_impl_status": "done",
+          "test_pass_status": "passed"
         }
       }
     },

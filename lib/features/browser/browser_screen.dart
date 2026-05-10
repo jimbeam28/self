@@ -15,6 +15,7 @@ import '../../core/network/webdav_client.dart';
 import '../../shared/models/nas_file.dart';
 import '../../shared/models/play_progress.dart';
 import '../../shared/models/play_queue.dart';
+import '../player/widgets/mini_player_bar.dart';
 import 'browser_provider.dart';
 import 'widgets/breadcrumb_bar.dart';
 import 'widgets/file_list_item.dart';
@@ -189,6 +190,8 @@ class BrowserScreen extends ConsumerWidget {
               },
             ),
             ),
+            // Mini player bar (PLY-08) — shown when audio is loaded/playing
+            const MiniPlayerBar(),
           ],
         ),
       ),
