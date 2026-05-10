@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'features/connection/connection_provider.dart';
+import 'features/connection/connection_list_screen.dart';
 import 'features/connection/connection_screen.dart';
 
 void main() {
@@ -38,6 +39,11 @@ final _router = GoRouter(
       path: '/connection',
       name: 'connection',
       builder: (context, state) => const ConnectionScreen(),
+    ),
+    GoRoute(
+      path: '/connections',
+      name: 'connections',
+      builder: (context, state) => const ConnectionListScreen(),
     ),
     GoRoute(
       path: '/browser',

@@ -49,6 +49,7 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
       appBar: AppBar(
         title: const Text('添加 WebDAV 连接'),
         centerTitle: true,
+        actions: _buildAppBarActions(context, ref),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -119,6 +120,26 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
         ),
       ),
     );
+  }
+
+  // ── AppBar actions ──────────────────────────────────────────────────────────
+
+  List<Widget> _buildAppBarActions(BuildContext context, WidgetRef ref) {
+    final listAsync = ref.watch(connectionListProvider);
+    final hasConnections = listAsync.maybeWhen(
+      data: (connections) => connections.isNotEmpty,
+      orElse: () => false,
+    );
+
+    if (!hasConnections) return [];
+
+    return [
+      IconButton(
+        icon: const Icon(Icons.list_alt_outlined),
+        tooltip: '管理连接',
+        onPressed: () => context.push('/connections'),
+      ),
+    ];
   }
 
   // ── Handlers ─────────────────────────────────────────────────────────────────

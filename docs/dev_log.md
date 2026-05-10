@@ -63,3 +63,25 @@
 ### 备注
 - 使用 sqflite_common_ffi 内存数据库进行 DAO 单元测试
 - CON-T23 验证密码列存储引用 key 而非明文密码
+
+---
+
+## [2026-05-10 16:30] CON-04 - 切换当前连接
+
+**模块**: Connection
+**状态**: ✅ 成功
+
+### 实现文件
+- `lib/features/connection/connection_list_screen.dart` — 连接列表管理页面（新建）
+- `lib/features/connection/connection_provider.dart` — 添加 switchActiveConnectionProvider
+- `lib/features/connection/connection_screen.dart` — 添加管理连接入口按钮
+- `lib/main.dart` — 添加 /connections 路由
+
+### 测试文件
+- `test/features/connection/con_04_test.dart` — 测试用例 3 个（CON-T25 ~ CON-T27）
+
+### 测试结果
+- 通过: 34 / 总计: 34（全部 Connection 模块测试）
+
+### 备注
+- 连接列表页面为 CON-05/CON-06 的编辑/删除功能预留了 UI 结构

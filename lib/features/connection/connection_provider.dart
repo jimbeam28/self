@@ -140,6 +140,19 @@ final startupValidationProvider =
   );
 });
 
+// ── Switch active connection ────────────────────────────────────────────────────
+
+/// Switches the active connection to the connection with the given [id].
+/// Invalidates [activeConnectionProvider] and [connectionListProvider] so the
+/// UI reacts immediately.
+final switchActiveConnectionProvider =
+    FutureProvider.family<void, int>((ref, id) async {
+  final dao = ref.watch(connectionDaoProvider);
+  await dao.setActive(id);
+  ref.invalidate(activeConnectionProvider);
+  ref.invalidate(connectionListProvider);
+});
+
 // ── Save connection use-case ──────────────────────────────────────────────────
 
 /// Encapsulates saving a new connection to the DB and secure storage.
