@@ -379,3 +379,24 @@
 - HeadphoneAction → MediaAction 映射：单击=播放/暂停，双击=下一首，三击=上一首
 - extractTitleFromPath 处理隐藏文件、双扩展名、CJK 字符等边界情况
 - TrackMetadata 不可变值对象，hasId3Cover 决定通知栏显示封面或默认图标
+
+---
+
+## [2026-05-10 17:59] PLY-05 - 播放队列管理
+
+**模块**: Player
+**状态**: ✅ 成功
+
+### 实现文件
+- `lib/shared/models/play_queue.dart` — 增强：PlayMode 枚举、nextIndex/previousIndex 纯函数、序列化
+
+### 测试文件
+- `test/features/player/ply_05_test.dart` — 测试用例 42 个（PLY-T30 ~ PLY-T37）
+
+### 测试结果
+- 通过: 334 / 总计: 334
+
+### 备注
+- nextIndex/previousIndex 支持 seeded Random 用于确定性测试
+- PlayQueue.toMap/fromMap 支持应用重启时队列恢复
+- repeatOne 模式下 startPositionMs 重置为 0
