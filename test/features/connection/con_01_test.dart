@@ -13,6 +13,7 @@ import 'package:nas_audio_player/core/network/webdav_client.dart';
 import 'package:nas_audio_player/features/connection/connection_provider.dart';
 import 'package:nas_audio_player/features/connection/connection_screen.dart';
 import 'package:nas_audio_player/shared/models/connection_config.dart';
+import 'package:nas_audio_player/shared/models/nas_file.dart';
 
 // ── Manual mock: no @GenerateMocks / build_runner ────────────────────────────
 
@@ -63,6 +64,16 @@ class MockWebDavClient implements WebDavClientInterface {
       );
     }
     return WebDavValidationResult.networkError();
+  }
+
+  @override
+  Future<List<NasFile>> listDirectory({
+    required String url,
+    required String username,
+    required String password,
+    required String path,
+  }) async {
+    throw UnimplementedError('listDirectory not needed for CON-01 tests');
   }
 }
 

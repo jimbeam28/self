@@ -133,3 +133,29 @@
 - 删除连接时级联删除 play_progress 记录（try-catch 包裹，progress 表未创建也不影响）
 - 只剩一个连接时抛出 LastConnectionException 阻止删除
 - 删除活跃连接后自动激活剩余第一个连接
+
+---
+
+## [2026-05-10 16:52] BRW-01 - 目录列表加载
+
+**模块**: Browser
+**状态**: ✅ 成功
+
+### 实现文件
+- `lib/shared/models/nas_file.dart` — 文件/目录数据模型与音频类型分类（新建）
+- `lib/core/network/webdav_client.dart` — 添加 listDirectory PROPFIND 方法与 XML 解析
+- `lib/features/browser/browser_provider.dart` — 目录内容 Provider 与导航栈管理（新建）
+- `lib/features/browser/browser_screen.dart` — 文件浏览页面：骨架屏/错误/空/列表四态（新建）
+- `lib/features/browser/widgets/file_list_item.dart` — 目录行与音频文件行组件（新建）
+- `lib/main.dart` — /browser 路由替换为 BrowserScreen
+
+### 测试文件
+- `test/features/browser/brw_01_test.dart` — 测试用例 13 个（BRW-T01~T09 + BRW-T43~T46）
+
+### 测试结果
+- 通过: 56 / 总计: 56（Connection 43 + Browser 13）
+
+### 备注
+- PROPFIND XML 207 响应手动解析（未引入 xml 包）
+- 支持 8 种音频格式过滤和分类（music/audiobook）
+- 文件名特殊字符（空格、中文、括号）正确解析

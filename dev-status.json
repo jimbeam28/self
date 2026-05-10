@@ -72,11 +72,11 @@
           "name": "目录列表加载",
           "design_doc": "module-browser.md §3.1",
           "impl_tasks": ["F-017", "F-020", "F-025"],
-          "impl_status": "pending",
+          "impl_status": "done",
           "test_tasks": ["F-061", "F-062"],
           "test_cases": ["BRW-T01", "BRW-T02", "BRW-T03", "BRW-T04", "BRW-T05", "BRW-T06", "BRW-T07", "BRW-T08", "BRW-T09", "BRW-T43", "BRW-T44", "BRW-T45", "BRW-T46"],
-          "test_impl_status": "pending",
-          "test_pass_status": "pending"
+          "test_impl_status": "done",
+          "test_pass_status": "passed"
         },
         "BRW-02": {
           "name": "目录导航（进入/返回）",

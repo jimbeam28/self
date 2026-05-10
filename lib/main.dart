@@ -16,6 +16,7 @@ import 'features/connection/connection_provider.dart';
 import 'features/connection/connection_edit_screen.dart';
 import 'features/connection/connection_list_screen.dart';
 import 'features/connection/connection_screen.dart';
+import 'features/browser/browser_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,8 +58,7 @@ final _router = GoRouter(
     GoRoute(
       path: '/browser',
       name: 'browser',
-      // BRW-01 and beyond — placeholder until Browser module is implemented
-      builder: (context, state) => const _BrowserPlaceholder(),
+      builder: (context, state) => const BrowserScreen(),
     ),
   ],
 );
@@ -181,20 +181,6 @@ class _OnboardingPage extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-// ── Browser placeholder (until BRW-01 is implemented) ────────────────────────
-
-class _BrowserPlaceholder extends StatelessWidget {
-  const _BrowserPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('文件浏览器')),
-      body: const Center(child: Text('Browser 模块待实现')),
     );
   }
 }

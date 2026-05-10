@@ -15,6 +15,7 @@ import 'package:nas_audio_player/core/database/database_helper.dart';
 import 'package:nas_audio_player/core/network/webdav_client.dart';
 import 'package:nas_audio_player/features/connection/connection_provider.dart';
 import 'package:nas_audio_player/shared/models/connection_config.dart';
+import 'package:nas_audio_player/shared/models/nas_file.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -34,6 +35,16 @@ class MockWebDavClient implements WebDavClientInterface {
     String basePath = '/',
   }) async {
     return _result ?? WebDavValidationResult.networkError();
+  }
+
+  @override
+  Future<List<NasFile>> listDirectory({
+    required String url,
+    required String username,
+    required String password,
+    required String path,
+  }) async {
+    throw UnimplementedError('listDirectory not needed for CON-05 tests');
   }
 }
 
