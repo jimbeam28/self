@@ -11,7 +11,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'features/browser/browser_provider.dart';
 import 'features/connection/connection_provider.dart';
 import 'features/connection/connection_edit_screen.dart';
 import 'features/connection/connection_list_screen.dart';
@@ -19,11 +21,15 @@ import 'features/connection/connection_screen.dart';
 import 'features/browser/browser_screen.dart';
 import 'features/player/player_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
   runApp(
-    const ProviderScope(
-      child: NasAudioPlayerApp(),
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWith((ref) => prefs),
+      ],
+      child: const NasAudioPlayerApp(),
     ),
   );
 }

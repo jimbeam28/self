@@ -267,3 +267,26 @@
 
 ### 备注
 - 下拉刷新清除缓存并重新加载，刷新失败时保留旧列表
+
+---
+
+## [2026-05-10 17:27] BRW-07 - 文件排序
+
+**模块**: Browser
+**状态**: ✅ 成功
+
+### 实现文件
+- `lib/features/browser/browser_provider.dart` — 添加 SortOption 枚举、SortOptionNotifier、sortFiles 函数
+- `lib/features/browser/browser_screen.dart` — 添加排序按钮和弹出菜单
+- `lib/main.dart` — 初始化 SharedPreferences 注入 ProviderScope
+
+### 测试文件
+- `test/features/browser/brw_07_test.dart` — 测试用例 8 个（BRW-T37 ~ BRW-T42 + BRW-T48 + BRW-T50）
+
+### 测试结果
+- 通过: 102 / 总计: 102（Connection 43 + Browser 59）
+
+### 备注
+- 排序选项持久化到 SharedPreferences，首次启动默认名称升序
+- 目录始终在文件前面，不论排序方式
+- Browser 模块全部 7 个功能实现完成

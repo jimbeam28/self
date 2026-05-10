@@ -4,6 +4,7 @@
 // patterns from flutter_riverpod directly (no @riverpod annotations, no build_runner).
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/network/webdav_client.dart';
 import '../../shared/models/connection_config.dart';
@@ -11,6 +12,73 @@ import '../../shared/models/nas_file.dart';
 import '../../shared/models/play_progress.dart';
 import '../../shared/models/play_queue.dart';
 import '../connection/connection_provider.dart';
+
+// ── Sort option ────────────────────────────────────────────────────────────────────
+
+/// Available sort orders for the file/directory list.
+enum SortOption {
+  /// Sort by name in ascending alphabetical order (A-Z).
+  nameAsc,
+
+  /// Sort by name in descending alphabetical order (Z-A).
+  nameDesc,
+
+  /// Sort by last-modified time, newest first.
+  modifiedDesc,
+}
+
+// ── SharedPreferences ──────────────────────────────────────────────────────────────
+
+/// Provider for the [SharedPreferences] instance.
+///
+/// Defaults to `null` so that tests without a real instance don't crash.
+/// In production, override this with [SharedPreferences.getInstance()]
+/// (see [main.dart]).
+final sharedPreferencesProvider = Provider<SharedPreferences?>((ref) => null);
+
+// ── Sort preference StateNotifier ──────────────────────────────────────────────────
+
+/// Manages the current sort option, persisting changes to [SharedPreferences]
+/// so the preference survives app restarts.
+///
+/// When [SharedPreferences] is unavailable (null) this notifier operates
+/// purely in-memory — useful for tests.
+class SortOptionNotifier extends StateNotifier<SortOption> {
+  final SharedPreferences? _prefs;
+
+  SortOptionNotifier(this._prefs) : super(SortOption.nameAsc) {
+    _load();
+  }
+
+  static const _key = 'browser_sort_option';
+
+  void _load() {
+    if (_prefs == null) return;
+    final saved = _prefs!.getString(_key);
+    if (saved != null) {
+      state = SortOption.values.cast<SortOption?>().firstWhere(
+            (e) => e!.name == saved,
+            orElse: () => SortOption.nameAsc,
+          )!;
+    }
+  }
+
+  /// Updates the sort option and persists it immediately (when [SharedPreferences]
+  /// is available).
+  void setOption(SortOption option) {
+    if (state == option) return;
+    state = option;
+    _prefs?.setString(_key, option.name);
+  }
+}
+
+/// The currently active sort option, backed by [SharedPreferences] for
+/// persistence across app restarts.
+final sortOptionProvider =
+    StateNotifierProvider<SortOptionNotifier, SortOption>((ref) {
+  final prefs = ref.read(sharedPreferencesProvider);
+  return SortOptionNotifier(prefs);
+});
 
 // ── Directory contents cache ────────────────────────────────────────────────────
 
@@ -65,6 +133,9 @@ final clearDirectoryCacheProvider = Provider<void Function(String? path)>((ref) 
 /// request).  On a cache miss a PROPFIND request is issued and the filtered,
 /// sorted result is stored in the cache.
 ///
+/// Watches [sortOptionProvider] so that changing the sort order re-sorts the
+/// cached data without a new network request.
+///
 /// Throws [WebDavException] on auth failures; other errors are surfaced
 /// as [AsyncError] via the FutureProvider.
 ///
@@ -72,6 +143,9 @@ final clearDirectoryCacheProvider = Provider<void Function(String? path)>((ref) 
 /// leak stale entries from the previous connection (BRW-05).
 final directoryContentsProvider =
     FutureProvider.family<List<NasFile>, String>((ref, path) async {
+  // 0. Watch sort option — provider re-executes on sort change
+  final sortOption = ref.watch(sortOptionProvider);
+
   // 1. Resolve the active connection
   final activeConn = await ref.watch(activeConnectionProvider.future);
   if (activeConn == null) {
@@ -82,7 +156,8 @@ final directoryContentsProvider =
   final cache = ref.read(directoryCacheProvider);
   final cacheKey = '${activeConn.id}:$path';
   if (cache.containsKey(cacheKey)) {
-    return cache[cacheKey]!;
+    // Re-sort with the current sort option (does not mutate cached list).
+    return sortFiles(cache[cacheKey]!, sortOption);
   }
 
   // 3. Read the password from secure storage
@@ -116,20 +191,44 @@ final directoryContentsProvider =
     return entry.audioType != null;
   }).toList();
 
-  // 6. Sort: directories first (by name), then files (by name)
-  filtered.sort((a, b) {
-    if (a.isDirectory && !b.isDirectory) return -1;
-    if (!a.isDirectory && b.isDirectory) return 1;
-    return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-  });
+  // 6. Sort with current sort option
+  final sorted = sortFiles(filtered, sortOption);
 
   // 7. Write to cache
   ref.read(directoryCacheProvider.notifier).update((state) {
-    return {...state, cacheKey: filtered};
+    return {...state, cacheKey: sorted};
   });
 
-  return filtered;
+  return sorted;
 });
+
+// ── Sort helper ────────────────────────────────────────────────────────────────────
+
+/// Returns a new list sorted according to [option].
+///
+/// Directories always appear before files regardless of the sort option
+/// (BRW-T42).  Within each group entries are ordered by the selected criterion.
+List<NasFile> sortFiles(List<NasFile> files, SortOption option) {
+  final sorted = files.toList();
+  sorted.sort((a, b) {
+    // Directories always first
+    if (a.isDirectory && !b.isDirectory) return -1;
+    if (!a.isDirectory && b.isDirectory) return 1;
+
+    // Within the same category, apply the selected sort
+    switch (option) {
+      case SortOption.nameAsc:
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      case SortOption.nameDesc:
+        return b.name.toLowerCase().compareTo(a.name.toLowerCase());
+      case SortOption.modifiedDesc:
+        final aTime = a.modifiedAt?.millisecondsSinceEpoch ?? 0;
+        final bTime = b.modifiedAt?.millisecondsSinceEpoch ?? 0;
+        return bTime.compareTo(aTime); // newest first
+    }
+  });
+  return sorted;
+}
 
 // ── Navigation stack ────────────────────────────────────────────────────────────
 

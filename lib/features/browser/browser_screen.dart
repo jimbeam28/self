@@ -49,6 +49,41 @@ class BrowserScreen extends ConsumerWidget {
                   },
                 )
               : null,
+          actions: [
+            PopupMenuButton<SortOption>(
+              icon: const Icon(Icons.sort),
+              tooltip: '排序方式',
+              onSelected: (option) {
+                ref.read(sortOptionProvider.notifier).setOption(option);
+              },
+              itemBuilder: (context) {
+                final current = ref.watch(sortOptionProvider);
+                return [
+                  PopupMenuItem(
+                    value: SortOption.nameAsc,
+                    child: _SortMenuItem(
+                      title: '名称升序',
+                      selected: current == SortOption.nameAsc,
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: SortOption.nameDesc,
+                    child: _SortMenuItem(
+                      title: '名称降序',
+                      selected: current == SortOption.nameDesc,
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: SortOption.modifiedDesc,
+                    child: _SortMenuItem(
+                      title: '修改时间',
+                      selected: current == SortOption.modifiedDesc,
+                    ),
+                  ),
+                ];
+              },
+            ),
+          ],
         ),
         body: Column(
           children: [
@@ -306,6 +341,32 @@ class _FileList extends StatelessWidget {
           onTap: (_) => onFileTap(file),
         );
       },
+    );
+  }
+}
+
+// ── Sort menu item ──────────────────────────────────────────────────────────────
+
+/// A row in the sort popup menu that shows a checkmark when [selected] is true.
+class _SortMenuItem extends StatelessWidget {
+  final String title;
+  final bool selected;
+
+  const _SortMenuItem({required this.title, required this.selected});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        if (selected)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Icon(Icons.check, size: 18, color: Theme.of(context).colorScheme.primary),
+          )
+        else
+          const SizedBox(width: 26),
+        Text(title),
+      ],
     );
   }
 }
