@@ -45,11 +45,13 @@ class ConnectionListScreen extends ConsumerWidget {
               connections: connections,
               activeId: null,
               onSwitch: (id) => _switchConnection(context, ref, id),
+              onDelete: (id) => _deleteConnection(context, ref, id, connections.length),
             ),
             data: (activeConfig) => _ConnectionListView(
               connections: connections,
               activeId: activeConfig?.id,
               onSwitch: (id) => _switchConnection(context, ref, id),
+              onDelete: (id) => _deleteConnection(context, ref, id, connections.length),
             ),
           );
         },
@@ -90,6 +92,77 @@ class ConnectionListScreen extends ConsumerWidget {
       }
     }
   }
+
+  Future<void> _deleteConnection(
+    BuildContext context,
+    WidgetRef ref,
+    int id,
+    int totalCount,
+  ) async {
+    // CON-T32: protect the last connection — show a warning, not a confirm dialog
+    if (totalCount <= 1) {
+      if (context.mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('无法删除'),
+            content: const Text('至少保留一个连接'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('确定'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('删除连接'),
+        content: const Text('确定要删除此连接吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await ref.read(deleteConnectionProvider(id).future);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('连接已删除'),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('删除失败：$e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
 }
 
 // ── Connection list view ───────────────────────────────────────────────────────
@@ -98,11 +171,13 @@ class _ConnectionListView extends StatelessWidget {
   final List<ConnectionConfig> connections;
   final int? activeId;
   final void Function(int id) onSwitch;
+  final void Function(int id) onDelete;
 
   const _ConnectionListView({
     required this.connections,
     required this.activeId,
     required this.onSwitch,
+    required this.onDelete,
   });
 
   @override
@@ -178,8 +253,9 @@ class _ConnectionListView extends StatelessWidget {
             onSelected: (value) {
               if (value == 'edit') {
                 context.push('/connections/edit/${conn.id}');
+              } else if (value == 'delete') {
+                onDelete(conn.id!);
               }
-              // CON-06: delete action will be wired here
             },
             itemBuilder: (_) => [
               const PopupMenuItem(

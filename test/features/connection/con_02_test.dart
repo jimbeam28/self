@@ -83,7 +83,7 @@ class FakeConnectionDao implements ConnectionDao {
       throw UnimplementedError('setActive not needed for CON-02 tests');
 
   @override
-  Future<int> delete(int id) =>
+  Future<bool> delete(int id) =>
       throw UnimplementedError('delete not needed for CON-02 tests');
 
   @override

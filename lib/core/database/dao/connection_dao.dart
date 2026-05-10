@@ -6,6 +6,15 @@ import 'package:sqflite/sqflite.dart';
 import '../../database/database_helper.dart';
 import '../../../shared/models/connection_config.dart';
 
+/// Thrown when attempting to delete the last remaining connection (CON-T32).
+class LastConnectionException implements Exception {
+  final String message;
+  const LastConnectionException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 class ConnectionDao {
   final DatabaseHelper _helper;
 
@@ -88,9 +97,49 @@ class ConnectionDao {
 
   // ── Delete ──────────────────────────────────────────────────────────────────
 
-  Future<int> delete(int id) async {
+  /// Deletes the connection with [id] and cascades to related records.
+  ///
+  /// Throws [LastConnectionException] if fewer than 2 connections remain
+  /// (CON-T32 protection — "至少保留一个连接").
+  ///
+  /// Returns `true` if the deleted connection was the active one
+  /// (CON-T34 — caller can notify the UI that the active connection changed).
+  Future<bool> delete(int id) async {
     final db = await _db;
-    return db.delete('connections', where: 'id = ?', whereArgs: [id]);
+
+    // CON-T32: protect the last remaining connection
+    final remaining = await count();
+    if (remaining <= 1) {
+      throw const LastConnectionException('至少保留一个连接');
+    }
+
+    // Check whether the connection being deleted is currently active
+    final config = await findById(id);
+    final wasActive = config?.isActive ?? false;
+
+    await db.transaction((txn) async {
+      // Cascade-delete any play_progress records (CON-T31).
+      // Table may not exist yet — silently ignore.
+      try {
+        await txn.delete('play_progress',
+            where: 'connection_id = ?', whereArgs: [id]);
+      } catch (_) {
+        // play_progress table not yet created — safe to ignore
+      }
+
+      // Delete the connection row itself
+      await txn.delete('connections', where: 'id = ?', whereArgs: [id]);
+    });
+
+    // CON-T34: if the deleted connection was active, auto-activate another
+    if (wasActive) {
+      final remainingConfigs = await findAll();
+      if (remainingConfigs.isNotEmpty) {
+        await setActive(remainingConfigs.first.id!);
+      }
+    }
+
+    return wasActive;
   }
 
   Future<int> count() async {

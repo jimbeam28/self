@@ -233,3 +233,26 @@ final connectionUpdaterProvider = Provider<ConnectionUpdater>((ref) {
     ref.watch(secureStorageProvider),
   );
 });
+
+// ── Delete connection use-case ──────────────────────────────────────────────────
+
+/// Deletes the connection with [id].
+///
+/// Cascades to:
+/// - play_progress records for this connection (DAO level, CON-T31)
+/// - secure-storage password entry (CON-T31)
+///
+/// Throws [LastConnectionException] when only one connection remains (CON-T32).
+/// Auto-activates another connection if the deleted one was active (CON-T34).
+final deleteConnectionProvider = FutureProvider.family<void, int>((ref, id) async {
+  final dao = ref.watch(connectionDaoProvider);
+  final storage = ref.watch(secureStorageProvider);
+
+  await dao.delete(id);
+
+  // Remove the password from secure storage (CON-T31)
+  await storage.delete(key: 'connection_password_$id');
+
+  ref.invalidate(activeConnectionProvider);
+  ref.invalidate(connectionListProvider);
+});

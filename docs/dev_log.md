@@ -110,3 +110,26 @@
 - 修改 URL/用户名/密码/基础路径后必须重新验证才能保存
 - 仅修改显示名称无需重新验证
 - ConnectionForm 支持 passwordRequired=false 用于编辑模式（留空保持原密码）
+
+---
+
+## [2026-05-10 16:43] CON-06 - 删除连接配置
+
+**模块**: Connection
+**状态**: ✅ 成功
+
+### 实现文件
+- `lib/core/database/dao/connection_dao.dart` — 增强 delete 方法：级联删除进度、末连接保护、自动激活
+- `lib/features/connection/connection_provider.dart` — 添加 deleteConnectionProvider
+- `lib/features/connection/connection_list_screen.dart` — 实现删除确认对话框和保护逻辑
+
+### 测试文件
+- `test/features/connection/con_06_test.dart` — 测试用例 5 个（CON-T31 ~ CON-T34 + Provider 集成）
+
+### 测试结果
+- 通过: 43 / 总计: 43（全部 Connection 模块测试）
+
+### 备注
+- 删除连接时级联删除 play_progress 记录（try-catch 包裹，progress 表未创建也不影响）
+- 只剩一个连接时抛出 LastConnectionException 阻止删除
+- 删除活跃连接后自动激活剩余第一个连接
