@@ -181,3 +181,24 @@
 - computeBreadcrumbLayout 作为纯函数导出，便于单元测试
 - 面包屑始终显示根目录和尽可能多的右侧段，中间段折叠为 "..."+ 弹出菜单
 - NavigationStackNotifier 在 BRW-01 中已实现，BRW-02 增强了 UI 层
+
+---
+
+## [2026-05-10 17:03] BRW-03 - 音频文件过滤
+
+**模块**: Browser
+**状态**: ✅ 成功
+
+### 实现文件
+- `lib/features/browser/widgets/file_list_item.dart` — AudioFileListTile 添加 progressPercentage 参数和进度条渲染
+
+### 测试文件
+- `test/features/browser/brw_03_test.dart` — 测试用例 9 个（BRW-T18 ~ BRW-T22 + BRW-T47 + BRW-T49）
+
+### 测试结果
+- 通过: 77 / 总计: 77（Connection 43 + Browser 34）
+
+### 备注
+- 音频分类逻辑（classifyType）在 BRW-01 中已完整实现
+- .m4b 扩展名、"有声书"/"audiobook"关键词 → audiobook ；其他 → music
+- 关键词匹配不区分大小写
