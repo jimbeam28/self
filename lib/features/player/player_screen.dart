@@ -20,6 +20,7 @@ import '../../core/services/audio_source_builder.dart';
 import '../../shared/models/play_queue.dart';
 import '../browser/browser_provider.dart';
 import '../connection/connection_provider.dart';
+import '../progress/progress_provider.dart';
 import '../timer/timer_provider.dart';
 import 'player_provider.dart';
 
@@ -35,16 +36,21 @@ class PlayerScreen extends ConsumerStatefulWidget {
   ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
 }
 
-class _PlayerScreenState extends ConsumerState<PlayerScreen> {
+class _PlayerScreenState extends ConsumerState<PlayerScreen>
+    with WidgetsBindingObserver {
   /// Tracks the source-load lifecycle: idle -> loading -> ready / error.
   PlayerLoadState _loadState = PlayerLoadState.idle;
 
   Timer? _timerExpiryChecker;
   StreamSubscription? _processingSubscription;
+  Timer? _autoSaveTimer;
+  StreamSubscription? _playerStateSubscription;
+  bool _wasPlaying = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Defer the async load to the next frame so that build() runs first
     // and the loading spinner appears immediately.
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadAndPlay());
@@ -62,10 +68,23 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     });
   }
 
+  // ── PRG-01 trigger ④: save progress when app goes to background ───────────
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _saveProgress();
+    }
+  }
+
   @override
   void dispose() {
+    // PRG-01 trigger ⑤: save progress on page destroy.
+    _saveProgress();
     _timerExpiryChecker?.cancel();
     _processingSubscription?.cancel();
+    _autoSaveTimer?.cancel();
+    _playerStateSubscription?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -144,6 +163,23 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
           }
         }
       });
+
+      // PRG-01 trigger ①: auto-save progress every 10 seconds.
+      _autoSaveTimer?.cancel();
+      _autoSaveTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+        _saveProgress();
+      });
+
+      // PRG-01 trigger ②: save progress immediately on pause.
+      _wasPlaying = true;
+      await _playerStateSubscription?.cancel();
+      _playerStateSubscription = player.playerStateStream.listen((state) {
+        final playing = state.playing;
+        if (_wasPlaying && !playing) {
+          _saveProgress();
+        }
+        _wasPlaying = playing;
+      });
     } on WebDavException catch (e) {
       setState(() {
         _loadState = PlayerLoadState.error(
@@ -168,9 +204,32 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     if (queue == null) return;
     final nextIdx = PlayQueue.nextIndex(queue.currentIndex, queue.length, mode);
     if (nextIdx == null) return;
+    // PRG-01 trigger ③: save current progress before switching tracks.
+    _saveProgress();
     final nextQueue = queue.withIndex(nextIdx);
     ref.read(currentPlayQueueProvider.notifier).state = nextQueue;
     _loadAndPlay();
+  }
+
+  // ── Progress auto-save (PRG-01) ─────────────────────────────────────────
+
+  /// Saves the current playback position to the database.
+  ///
+  /// Guards against null queue, null connection, and missing connection id.
+  /// Called from five trigger points:
+  /// ① 10-second periodic timer, ② pause, ③ track change,
+  /// ④ app background, ⑤ dispose.
+  void _saveProgress() {
+    final queue = ref.read(currentPlayQueueProvider);
+    final conn = ref.read(activeConnectionProvider).valueOrNull;
+    if (queue == null || conn?.id == null) return;
+    final player = ref.read(audioPlayerProvider);
+    ref.read(upsertProgressProvider)(
+      connectionId: conn!.id!,
+      filePath: queue.current.path,
+      positionMs: player.position.inMilliseconds,
+      durationMs: player.duration?.inMilliseconds,
+    );
   }
 
   // ── Build ────────────────────────────────────────────────────────────────────

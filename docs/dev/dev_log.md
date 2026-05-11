@@ -1,5 +1,25 @@
 ---
 
+## [2026-05-11 12:15] A-3 - 实现播放进度自动保存（五个触发点）
+
+**优先级**: P0
+**关联问题**: PRG-01
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/player/player_screen.dart` — 添加五个触发点：①10s定时保存 ②暂停保存 ③切曲保存 ④后台保存 ⑤dispose保存
+
+### 验证结果
+- 通过: 5 / 总计: 5（work_items 检查项）
+- 静态分析通过，无新增 warning
+
+### 备注
+- 混入 WidgetsBindingObserver 监听 AppLifecycleState.paused
+- _saveProgress 包含完整的 null guard（queue/conn/id）
+- 暂停检测通过 _wasPlaying 标志追踪 playing→paused 转换
+
+---
+
 ## [2026-05-11 12:10] A-4 - TMR-02 接入 processingStateStream 触发「播完当前」
 
 **优先级**: P0
