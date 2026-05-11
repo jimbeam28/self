@@ -235,7 +235,7 @@
           "files_involved": [
             "修改: lib/features/player/player_provider.dart:284"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "C-3": {
@@ -249,7 +249,7 @@
           "files_involved": [
             "修改: lib/features/player/player_screen.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "C-4": {
@@ -264,7 +264,7 @@
           "files_involved": [
             "修改: lib/features/connection/widgets/connection_form.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         }
       }

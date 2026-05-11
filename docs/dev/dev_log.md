@@ -1,5 +1,38 @@
 ---
 
+## [2026-05-12 10:15] C-2 - 时间格式补齐为三段式
+
+**优先级**: P2
+**关联问题**: PLY-02
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/player/player_provider.dart` — formatDuration 不足 1 小时时加 "0:" 前缀
+
+---
+
+## [2026-05-12 10:15] C-3 - 调速后同步 currentSpeedProvider
+
+**优先级**: P2
+**关联问题**: PLY-07
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/player/player_screen.dart` — _SpeedControl 调速后同步更新 currentSpeedProvider
+
+---
+
+## [2026-05-12 10:15] C-4 - 表单层添加 URL 格式前置校验
+
+**优先级**: P2
+**关联问题**: CON-01
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/connection/widgets/connection_form.dart` — _validateUrl 添加 normaliseWebDavUrl + isValidWebDavUrl 格式校验
+
+---
+
 ## [2026-05-12 10:10] B-1 - 切换连接后清除浏览器缓存
 
 **优先级**: P1

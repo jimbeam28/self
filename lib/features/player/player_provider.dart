@@ -294,7 +294,7 @@ String formatDuration(Duration? duration) {
   if (hours > 0) {
     return '$hours:$mm:$ss';
   }
-  return '$mm:$ss';
+  return '0:$mm:$ss';
 }
 
 // ── Background playback (PLY-03) ─────────────────────────────────────────────────

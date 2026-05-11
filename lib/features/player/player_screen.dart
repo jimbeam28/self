@@ -665,7 +665,7 @@ class _SpeedControl extends ConsumerWidget {
         final currentSpeed = snapshot.data ?? 1.0;
 
         return OutlinedButton.icon(
-          onPressed: () => _showSpeedSelector(context, player, currentSpeed),
+          onPressed: () => _showSpeedSelector(context, ref, player, currentSpeed),
           icon: const Icon(Icons.speed, size: 20),
           label: Text('${currentSpeed}x'),
           style: OutlinedButton.styleFrom(
@@ -678,6 +678,7 @@ class _SpeedControl extends ConsumerWidget {
 
   void _showSpeedSelector(
     BuildContext context,
+    WidgetRef ref,
     AudioPlayer player,
     double currentSpeed,
   ) {
@@ -716,6 +717,7 @@ class _SpeedControl extends ConsumerWidget {
                       : null,
                   onTap: () {
                     player.setSpeed(speed);
+                    ref.read(currentSpeedProvider.notifier).state = speed;
                     Navigator.of(ctx).pop();
                   },
                 );

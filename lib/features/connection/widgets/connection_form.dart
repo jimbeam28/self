@@ -4,6 +4,7 @@
 // and trigger validation without coupling the form internals.
 
 import 'package:flutter/material.dart';
+import '../../../core/network/webdav_client.dart';
 import '../../../shared/models/connection_config.dart';
 
 // ── Form controller (passed down from screen) ─────────────────────────────────
@@ -136,7 +137,11 @@ class _ConnectionFormState extends State<ConnectionForm> {
 
   String? _validateUrl(String? value) {
     if (value == null || value.trim().isEmpty) return '请输入服务器地址';
-    return null; // URL format is validated by WebDavClient.isValidWebDavUrl
+    final normalised = normaliseWebDavUrl(value.trim());
+    if (!isValidWebDavUrl(normalised)) {
+      return '请输入有效的服务器地址（如 http://192.168.1.1:5005）';
+    }
+    return null;
   }
 
   String? _validateRequired(String? value, String fieldName) {
