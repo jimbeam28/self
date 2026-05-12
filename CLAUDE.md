@@ -45,8 +45,7 @@ docs/
     ├── dev_log.md            # 实现日志
     ├── fix.md                # 修复计划
     ├── fix-status.json       # 修复状态跟踪
-    ├── analysis.md           # 分析报告
-    └── progress.md           # 开发进度
+    └── analysis.md           # 分析报告
 ```
 
 ## 模块说明
