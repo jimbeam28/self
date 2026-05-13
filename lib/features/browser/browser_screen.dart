@@ -190,7 +190,9 @@ class BrowserScreen extends ConsumerWidget {
                             ref
                                 .read(currentPlayQueueProvider.notifier)
                                 .state = queue;
-                            goRouter.go('/player');
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (context.mounted) goRouter.go('/player');
+                            });
                           } else {
                             // Start from beginning (or dialog dismissed)
                             // PRG-T20: also delete progress on start-over
@@ -207,7 +209,9 @@ class BrowserScreen extends ConsumerWidget {
                             ref
                                 .read(currentPlayQueueProvider.notifier)
                                 .state = queue;
-                            goRouter.go('/player');
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (context.mounted) goRouter.go('/player');
+                            });
                           }
                         });
                       } else {

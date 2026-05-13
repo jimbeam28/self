@@ -17,11 +17,13 @@ import 'package:just_audio/just_audio.dart';
 
 import '../../core/network/webdav_client.dart';
 import '../../core/services/audio_source_builder.dart';
+import '../../core/services/timer_service.dart';
 import '../../shared/models/play_queue.dart';
 import '../browser/browser_provider.dart';
 import '../connection/connection_provider.dart';
 import '../progress/progress_provider.dart';
 import '../timer/timer_provider.dart';
+import '../timer/widgets/timer_button.dart';
 import 'player_provider.dart';
 
 /// The full-screen audio player.
@@ -147,8 +149,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
         password: password,
       );
 
-      // 4. Load into the player
+      // 4. Stop any existing playback and load the new source.
       final player = ref.read(audioPlayerProvider);
+      await player.stop();
       await player.setAudioSource(source);
 
       // 5. Seek to resume position if present
@@ -438,6 +441,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
           const SizedBox(height: 16),
           // Speed control
           const _SpeedControl(),
+          const SizedBox(height: 16),
+          // Timer button (TMR-01 ~ TMR-04)
+          const _TimerControl(),
           const SizedBox(height: 16),
           const _PlayModeControl(),
           const Spacer(),
@@ -852,6 +858,46 @@ class _PlayModeControl extends ConsumerWidget {
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
+    );
+  }
+}
+
+// ── Timer control ───────────────────────────────────────────────────────────
+
+class _TimerControl extends ConsumerWidget {
+  const _TimerControl();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(timerStateProvider);
+    final isActive = state != null;
+    final isAfterCurrent = state?.mode == TimerMode.afterCurrent;
+
+    String? displayText;
+    if (isAfterCurrent) {
+      displayText = '播完停止';
+    } else if (isActive) {
+      displayText = ref.watch(formattedRemainingProvider);
+    }
+
+    return OutlinedButton.icon(
+      onPressed: () => _showTimerSheet(context, isActive),
+      icon: Icon(
+        Icons.hourglass_bottom,
+        size: 20,
+        color: isActive ? Theme.of(context).colorScheme.primary : null,
+      ),
+      label: Text(displayText ?? '定时停止'),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
+    );
+  }
+
+  void _showTimerSheet(BuildContext context, bool isActive) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => TimerBottomSheet(isActive: isActive),
     );
   }
 }
