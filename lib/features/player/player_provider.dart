@@ -35,7 +35,7 @@ final audioPlayerProvider = Provider<AudioPlayer>((ref) {
 ///
 /// Provided via [ProviderScope.overrides] in [main] so that the player
 /// screen and other widgets can interact with the handler directly.
-final audioHandlerProvider = Provider<NasAudioHandler>((ref) {
+final audioHandlerProvider = Provider<NasAudioHandler?>((ref) {
   throw UnimplementedError('audioHandlerProvider must be overridden in main');
 });
 

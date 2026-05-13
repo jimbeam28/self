@@ -9,7 +9,8 @@
     <application
         android:label="NAS 音乐播放器"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
 
         <meta-data
             android:name="flutterEmbedding"

@@ -28,25 +28,31 @@ import 'features/settings/settings_screen.dart';
 import 'features/settings/about_screen.dart';
 import 'features/settings/settings_provider.dart';
 
-late NasAudioHandler _audioHandler;
+NasAudioHandler? _audioHandler;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
-
-  // Create the AudioPlayer before AudioService so the handler can own it.
   final audioPlayer = AudioPlayer();
 
-  // Initialise the audio service with the handler.
-  _audioHandler = await AudioService.init(
-    builder: () => NasAudioHandler(audioPlayer),
-    config: AudioServiceConfig(
-      androidNotificationChannelId: 'com.example.nas_audio_player.channel',
-      androidNotificationChannelName: 'NAS 音乐播放器',
-      androidNotificationOngoing: true,
-      androidStopForegroundOnPause: false,
-    ),
-  );
+  // Initialise the audio service.  On some devices / Android versions this
+  // may fail — the app still works without background-playback support.
+  try {
+    _audioHandler = await AudioService.init(
+      builder: () => NasAudioHandler(audioPlayer),
+      config: AudioServiceConfig(
+        androidNotificationChannelId: 'com.example.nas_audio_player.channel',
+        androidNotificationChannelName: 'NAS 音乐播放器',
+        androidNotificationOngoing: true,
+        androidStopForegroundOnPause: false,
+      ),
+    );
+  } catch (e) {
+    // The error is logged but the app continues — playback still works via
+    // just_audio; only lock-screen / notification controls are missing.
+    debugPrint('AudioService.init failed: $e');
+    _audioHandler = null;
+  }
 
   runApp(
     ProviderScope(
