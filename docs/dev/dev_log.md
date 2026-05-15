@@ -910,3 +910,22 @@
 - 根因: _NextButton 调用 GoRouter.go('/player') 跳转页面，未直接在当前页加载下一曲
 - 修复后: onPressed 直接读取连接信息和凭据，构建音频源并加载播放，留在当前页面
 
+---
+
+## [2026-05-15 14:22] C-1 - 快退/快进按钮图标动态显示步长
+
+**优先级**: P2
+**关联问题**: BUG-1b, BUG-3a
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/player/player_screen.dart` — 添加 _iconForSeekBackward / _iconForSeekForward 辅助方法，替换硬编码图标为动态选择
+
+### 验证结果
+- 通过: 2 / 总计: 3（work_items 检查项，可选标签项未实现）
+- 静态分析通过，无新增 error/warning
+
+### 备注
+- 5s/10s/30s 使用带数字的 Material Icon (replay_5/10/30, forward_5/10/30)
+- 15s/60s 等无对应图标的步长使用通用 replay/forward 图标，tooltip 已显示步长秒数
+

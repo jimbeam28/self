@@ -691,7 +691,7 @@ class _PlaybackControls extends ConsumerWidget {
         const SizedBox(width: 8),
         // Skip backward
         _buildSkipButton(
-          icon: Icons.replay_10,
+          icon: _iconForSeekBackward(seekStep),
           tooltip: '后退 ${seekStep}s',
           onPressed: () {
             final position = player.position;
@@ -727,7 +727,7 @@ class _PlaybackControls extends ConsumerWidget {
         const SizedBox(width: 24),
         // Skip forward
         _buildSkipButton(
-          icon: Icons.forward_30,
+          icon: _iconForSeekForward(seekStep),
           tooltip: '前进 ${seekStep}s',
           onPressed: () {
             final position = player.position;
@@ -747,6 +747,24 @@ class _PlaybackControls extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  IconData _iconForSeekBackward(int seconds) {
+    switch (seconds) {
+      case 5:  return Icons.replay_5;
+      case 10: return Icons.replay_10;
+      case 30: return Icons.replay_30;
+      default: return Icons.replay;
+    }
+  }
+
+  IconData _iconForSeekForward(int seconds) {
+    switch (seconds) {
+      case 5:  return Icons.forward_5;
+      case 10: return Icons.forward_10;
+      case 30: return Icons.forward_30;
+      default: return Icons.forward;
+    }
   }
 
   Widget _buildSkipButton({
