@@ -194,6 +194,7 @@ class _ConnectionEditScreenState extends ConsumerState<ConnectionEditScreen> {
   /// before saving.
   bool _needsValidation() {
     if (_originalConfig == null) return true; // safety net
+    if (!_formController.isAttached) return false;
     return _formController.url != _originalConfig!.url ||
         _formController.username != _originalConfig!.username ||
         _formController.basePath != _originalConfig!.basePath ||

@@ -797,3 +797,23 @@
 - Settings 模块全部 5 个功能实现完成
 - **全部 6 个模块 35 个功能实现完成**
 
+---
+
+## [2026-05-15 14:00] A-5 - 编辑连接 LateInitializationError 修复
+
+**优先级**: P0
+**关联问题**: BUG-3c
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/connection/widgets/connection_form.dart` — ConnectionFormController 添加 isAttached getter，try-catch _state 访问防崩溃
+- `lib/features/connection/connection_edit_screen.dart` — _needsValidation() 添加 !_formController.isAttached 守卫
+
+### 验证结果
+- 通过: 2 / 总计: 2（work_items 检查项）
+- 静态分析通过，0 issues
+
+### 备注
+- 根因: _state 为 late 字段，build() 阶段的 _needsValidation() 在 initState() 之前访问导致 LateInitializationError
+- isAttached 守卫确保表单未挂载时跳过字段值比较
+

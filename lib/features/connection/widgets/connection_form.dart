@@ -14,6 +14,15 @@ class ConnectionFormController {
 
   void _attach(_ConnectionFormState state) => _state = state;
 
+  bool get isAttached {
+    try {
+      _state;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   String get url => _state._urlController.text.trim();
   String get username => _state._usernameController.text.trim();
   String get password => _state._passwordController.text;
