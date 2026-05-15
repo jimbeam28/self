@@ -267,7 +267,6 @@ final setDefaultSpeedProvider = Provider<void Function(double)>((ref) {
     final prefs = ref.read(sharedPreferencesProvider);
     prefs?.setDouble(_defaultSpeedKey, speed);
     ref.invalidate(defaultSpeedProvider);
-    ref.read(currentSpeedProvider.notifier).state = speed;
   };
 });
 

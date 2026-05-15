@@ -71,9 +71,9 @@ class MiniPlayerBar extends ConsumerWidget {
                     child: Row(
                       children: [
                         // Track info (name) — only tapping the title navigates
-                        GestureDetector(
-                          onTap: () => GoRouter.of(context).push('/player'),
-                          child: Expanded(
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => GoRouter.of(context).push('/player'),
                             child: Text(
                               queue.current.name,
                               maxLines: 1,
