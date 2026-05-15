@@ -81,14 +81,14 @@ void main() {
     });
 
     test('seek to exactly total duration', () {
-      final total = const Duration(seconds: 100);
+      const total = Duration(seconds: 100);
       final result = clampSeek(total, total);
       expect(result, equals(total),
           reason: 'seek 到总时长末尾应返回总时长');
     });
 
     test('seek to 1ms before end', () {
-      final total = const Duration(seconds: 100);
+      const total = Duration(seconds: 100);
       final result = clampSeek(const Duration(seconds: 99, milliseconds: 999), total);
       expect(result, equals(const Duration(seconds: 99, milliseconds: 999)));
     });
@@ -105,7 +105,7 @@ void main() {
     });
 
     test('seek to 1ms beyond total → clamped to total', () {
-      final total = const Duration(seconds: 60);
+      const total = Duration(seconds: 60);
       final result =
           clampSeek(const Duration(seconds: 60, milliseconds: 1), total);
       expect(result, equals(total));
@@ -217,7 +217,7 @@ void main() {
     });
 
     test('skip forward when already at end → stays at end', () {
-      final total = const Duration(seconds: 100);
+      const total = Duration(seconds: 100);
       final result = skipForward(total, total);
       expect(result, equals(total));
     });
@@ -407,7 +407,7 @@ void main() {
 
   group('clampSeek — additional edge cases', () {
     test('target between 0 and total returns target', () {
-      final total = const Duration(seconds: 100);
+      const total = Duration(seconds: 100);
       for (int s in [1, 25, 50, 75, 99]) {
         expect(clampSeek(Duration(seconds: s), total),
             equals(Duration(seconds: s)));
@@ -431,8 +431,8 @@ void main() {
 
   group('skipForward + skipBackward round-trip', () {
     test('forward 15s then backward 15s returns to original position', () {
-      final current = const Duration(seconds: 30);
-      final total = const Duration(seconds: 100);
+      const current = Duration(seconds: 30);
+      const total = Duration(seconds: 100);
 
       final forward = skipForward(current, total);
       final back = skipBackward(forward);
@@ -442,8 +442,8 @@ void main() {
     });
 
     test('backward 15s then forward 15s returns to original position', () {
-      final current = const Duration(seconds: 30);
-      final total = const Duration(seconds: 100);
+      const current = Duration(seconds: 30);
+      const total = Duration(seconds: 100);
 
       final back = skipBackward(current);
       final forward = skipForward(back, total);
@@ -453,8 +453,8 @@ void main() {
 
     test('round-trip fails when near boundaries (expected)', () {
       // From 5s: backward clamps to 0, forward from 0 goes to 15s (not 5s)
-      final current = const Duration(seconds: 5);
-      final total = const Duration(seconds: 100);
+      const current = Duration(seconds: 5);
+      const total = Duration(seconds: 100);
 
       final back = skipBackward(current);
       expect(back, equals(Duration.zero), reason: '从 5s 后退 15s 被限制到 0');
@@ -467,8 +467,8 @@ void main() {
     });
 
     test('round-trip fails when near end (expected)', () {
-      final current = const Duration(seconds: 95);
-      final total = const Duration(seconds: 100);
+      const current = Duration(seconds: 95);
+      const total = Duration(seconds: 100);
 
       final forward = skipForward(current, total);
       expect(forward, equals(total), reason: '从 95s 前进 15s 被限制到 100s');
@@ -569,7 +569,7 @@ void main() {
       // This test verifies the math independently of the Slider widget.
       const positionMs = 30000; // 30 seconds
       const durationMs = 100000; // 100 seconds
-      final fraction = positionMs / durationMs;
+      const fraction = positionMs / durationMs;
 
       expect(fraction, closeTo(0.3, 0.01),
           reason:
@@ -595,7 +595,7 @@ void main() {
       // The Slider is created with onChanged: null when duration is null/0,
       // which disables it.  Verified in _ProgressSlider build logic.
       const Duration? nullDuration = null;
-      final hasDuration = nullDuration != null && nullDuration > Duration.zero;
+      const hasDuration = nullDuration != null && nullDuration > Duration.zero;
       expect(hasDuration, isFalse,
           reason: 'null 或 zero duration 时不应启用 slider');
     });

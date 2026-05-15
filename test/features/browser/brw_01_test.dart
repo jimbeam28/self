@@ -168,7 +168,7 @@ void main() {
     test('BRW-T04: WebDavException is created with correct properties', () {
       // Verify the WebDavException type carries the expected structure
       // that the UI layer relies on for error display.
-      final netEx = const WebDavException('无法连接到服务器');
+      const netEx = WebDavException('无法连接到服务器');
       expect(netEx.message, equals('无法连接到服务器'));
       expect(netEx.statusCode, isNull);
       expect(netEx.isAuthError, isFalse);
@@ -180,15 +180,15 @@ void main() {
     // ── BRW-T05: PROPFIND returns 401 throws auth exception ──────────────────
 
     test('BRW-T05: 401 produces auth error with isAuthError true', () {
-      final authEx = const WebDavException('用户名或密码错误', statusCode: 401);
+      const authEx = WebDavException('用户名或密码错误', statusCode: 401);
       expect(authEx.isAuthError, isTrue,
           reason: '401 异常的 isAuthError 应为 true');
       expect(authEx.statusCode, equals(401));
       expect(authEx.message, contains('用户名或密码'));
 
       // Also test 403
-      final forbiddenEx =
-          const WebDavException('禁止访问', statusCode: 403);
+      const forbiddenEx =
+          WebDavException('禁止访问', statusCode: 403);
       expect(forbiddenEx.isAuthError, isTrue,
           reason: '403 异常也应标记为认证错误');
     });

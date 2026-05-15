@@ -396,10 +396,10 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   // ── Loading ──────────────────────────────────────────────────────────────────
 
   Widget _buildLoading() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: const [
+        children: [
           CircularProgressIndicator(),
           SizedBox(height: 16),
           Text('正在加载音频...'),
@@ -530,7 +530,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
 
 /// Animated music icon that pulses while playing.
 class _NowPlayingIcon extends ConsumerWidget {
-  const _NowPlayingIcon({super.key});
+  const _NowPlayingIcon();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

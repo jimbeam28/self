@@ -47,7 +47,7 @@ void main() {
 
     test('speed button label for 0.5x', () {
       // The _SpeedControl widget renders Text('${currentSpeed}x').
-      final label = '${0.5}x';
+      const label = '${0.5}x';
       expect(label, equals('0.5x'),
           reason: '速度按钮应显示 "0.5x"');
     });
@@ -83,7 +83,7 @@ void main() {
     });
 
     test('speed button label for 2.0x', () {
-      final label = '${2.0}x';
+      const label = '${2.0}x';
       expect(label, equals('2.0x'),
           reason: '速度按钮应显示 "2.0x"');
     });

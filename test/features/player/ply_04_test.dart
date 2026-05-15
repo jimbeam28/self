@@ -228,7 +228,7 @@ void main() {
 
   group('PLY-T28: File with ID3 cover shows cover in notification', () {
     test('TrackMetadata with hasId3Cover=true shows cover', () {
-      final metadata = TrackMetadata(
+      const metadata = TrackMetadata(
         filePath: '/music/album/01 - Track.mp3',
         hasId3Cover: true,
       );
@@ -240,7 +240,7 @@ void main() {
     });
 
     test('showCover and showDefaultIcon are mutually exclusive — cover case', () {
-      final metadata = TrackMetadata(
+      const metadata = TrackMetadata(
         filePath: '/music/song.mp3',
         hasId3Cover: true,
       );
@@ -252,7 +252,7 @@ void main() {
     });
 
     test('title is still correctly extracted when cover exists', () {
-      final metadata = TrackMetadata(
+      const metadata = TrackMetadata(
         filePath: '/music/First Track.flac',
         hasId3Cover: true,
       );
@@ -266,7 +266,7 @@ void main() {
 
   group('PLY-T29: File without ID3 cover shows default app icon', () {
     test('TrackMetadata with hasId3Cover=false shows default icon', () {
-      final metadata = TrackMetadata(
+      const metadata = TrackMetadata(
         filePath: '/music/02 - No Cover.mp3',
         hasId3Cover: false,
       );
@@ -278,7 +278,7 @@ void main() {
     });
 
     test('showCover and showDefaultIcon are mutually exclusive — no-cover case', () {
-      final metadata = TrackMetadata(
+      const metadata = TrackMetadata(
         filePath: '/music/song.mp3',
         hasId3Cover: false,
       );
@@ -289,7 +289,7 @@ void main() {
     });
 
     test('title is still correctly extracted when cover is absent', () {
-      final metadata = TrackMetadata(
+      const metadata = TrackMetadata(
         filePath: '/music/Second Track.ogg',
         hasId3Cover: false,
       );
@@ -299,7 +299,7 @@ void main() {
     });
 
     test('Chinese filename without cover', () {
-      final metadata = TrackMetadata(
+      const metadata = TrackMetadata(
         filePath: '/音乐/有声书/第三章.m4b',
         hasId3Cover: false,
       );
@@ -315,11 +315,11 @@ void main() {
 
   group('TrackMetadata equality and immutability', () {
     test('identical values are equal', () {
-      final a = TrackMetadata(
+      const a = TrackMetadata(
         filePath: '/music/song.mp3',
         hasId3Cover: true,
       );
-      final b = TrackMetadata(
+      const b = TrackMetadata(
         filePath: '/music/song.mp3',
         hasId3Cover: true,
       );
@@ -329,31 +329,31 @@ void main() {
     });
 
     test('different filePath are not equal', () {
-      final a = TrackMetadata(filePath: '/a.mp3', hasId3Cover: true);
-      final b = TrackMetadata(filePath: '/b.mp3', hasId3Cover: true);
+      const a = TrackMetadata(filePath: '/a.mp3', hasId3Cover: true);
+      const b = TrackMetadata(filePath: '/b.mp3', hasId3Cover: true);
 
       expect(a, isNot(equals(b)),
           reason: '不同 filePath 的对象不应相等');
     });
 
     test('different hasId3Cover are not equal', () {
-      final a = TrackMetadata(filePath: '/a.mp3', hasId3Cover: true);
-      final b = TrackMetadata(filePath: '/a.mp3', hasId3Cover: false);
+      const a = TrackMetadata(filePath: '/a.mp3', hasId3Cover: true);
+      const b = TrackMetadata(filePath: '/a.mp3', hasId3Cover: false);
 
       expect(a, isNot(equals(b)),
           reason: '不同 hasId3Cover 的对象不应相等');
     });
 
     test('hashCode is consistent with equality', () {
-      final a = TrackMetadata(filePath: '/x.mp3', hasId3Cover: false);
-      final b = TrackMetadata(filePath: '/x.mp3', hasId3Cover: false);
+      const a = TrackMetadata(filePath: '/x.mp3', hasId3Cover: false);
+      const b = TrackMetadata(filePath: '/x.mp3', hasId3Cover: false);
 
       expect(a.hashCode, equals(b.hashCode),
           reason: '相等对象的 hashCode 应相同');
     });
 
     test('copyWith returns new instance with updated field', () {
-      final original = TrackMetadata(
+      const original = TrackMetadata(
         filePath: '/music/song.mp3',
         hasId3Cover: false,
       );
@@ -368,7 +368,7 @@ void main() {
     });
 
     test('copyWith preserves unchanged fields', () {
-      final original = TrackMetadata(
+      const original = TrackMetadata(
         filePath: '/music/song.mp3',
         hasId3Cover: true,
       );

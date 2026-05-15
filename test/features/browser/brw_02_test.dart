@@ -4,8 +4,6 @@
 // Unit tests  (BRW-T10~T16): NavigationStackNotifier push/pop/popTo
 // Unit test   (BRW-T17): computeBreadcrumbLayout overflow collapse logic
 
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nas_audio_player/features/browser/browser_provider.dart';
 import 'package:nas_audio_player/features/browser/widgets/breadcrumb_bar.dart'

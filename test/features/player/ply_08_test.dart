@@ -246,7 +246,7 @@ void main() {
     test('progress fraction = position / duration', () {
       const positionMs = 30000;
       const durationMs = 100000;
-      final fraction = positionMs / durationMs;
+      const fraction = positionMs / durationMs;
       expect(fraction, closeTo(0.3, 0.001),
           reason: '30s / 100s = 0.3');
 

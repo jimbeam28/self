@@ -13,8 +13,6 @@
 //                            clears state, and signals that pause() should
 //                            be called (TMR-05)
 
-import 'dart:async';
-
 /// The mode of an active sleep timer.
 enum TimerMode {
   /// Fixed-duration countdown (TMR-01).

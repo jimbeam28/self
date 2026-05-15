@@ -379,7 +379,7 @@ void main() {
     });
 
     test('togglePlayPause when stopped -> playing', () {
-      final state = BackgroundPlaybackConfig.initial;
+      const state = BackgroundPlaybackConfig.initial;
 
       final after = state.handleMediaControl(MediaControlAction.togglePlayPause);
 
@@ -756,7 +756,7 @@ void main() {
 
   group('BackgroundPlaybackState factories', () {
     test('initial factory returns correct defaults', () {
-      final state = BackgroundPlaybackConfig.initial;
+      const state = BackgroundPlaybackConfig.initial;
 
       expect(state.backgroundEnabled, isTrue);
       expect(state.isInForeground, isTrue);

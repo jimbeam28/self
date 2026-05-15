@@ -15,7 +15,6 @@ import 'package:nas_audio_player/core/database/database_helper.dart';
 import 'package:nas_audio_player/features/progress/progress_dialog.dart';
 import 'package:nas_audio_player/features/progress/progress_provider.dart';
 import 'package:nas_audio_player/shared/models/play_progress.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -874,7 +873,7 @@ void main() {
     // ── PRG-T25: Long-press file WITHOUT progress → menu hides option ──────
 
     test('PRG-T25: menu does NOT include clear option when no progress', () {
-      final progress = null; // no saved progress
+      const progress = null; // no saved progress
 
       final menuItems = <String>[];
       menuItems.add('添加到队列');

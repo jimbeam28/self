@@ -52,7 +52,6 @@ class ConnectionConfig {
   /// Converts this model to a database row map.
   /// [passwordKey] is the flutter_secure_storage reference key (not plaintext).
   Map<String, dynamic> toMap({required String passwordKey}) {
-    final now = DateTime.now().millisecondsSinceEpoch;
     return {
       if (id != null) 'id': id,
       'name': name,

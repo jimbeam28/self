@@ -670,7 +670,7 @@ void main() {
 
   group('PlayMode enum values', () {
     test('all four modes exist and are distinct', () {
-      final modes = PlayMode.values;
+      const modes = PlayMode.values;
       expect(modes.length, equals(4));
       expect(modes, contains(PlayMode.sequential));
       expect(modes, contains(PlayMode.repeatOne));

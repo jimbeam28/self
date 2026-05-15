@@ -122,11 +122,11 @@ Agent 输出：
 
 **在本会话中直接执行（不使用 Agent）**，确保静态分析和全部测试通过：
 
-1. 运行 `flutter analyze`，确认无 error 级别问题（info/warning 可忽略，但不得引入新的 warning）
+1. 运行 `flutter analyze`，确认 0 issues（零 error、零 warning、零 info）
 2. 运行 `flutter test`，确认全部测试通过
 3. 如有失败：
    - 分析根因，直接修复代码
-   - 重复直到 `flutter analyze` 零 error + `flutter test` 全通过
+   - 重复直到 `flutter analyze` 0 issues + `flutter test` 全通过
 4. 如果遇到无法解决的失败，报告具体原因并暂停
 
 ---
@@ -140,4 +140,4 @@ Agent 输出：
 - 测试通过情况（通过数 / 总数）
 - 建议将 `docs/dev/dev-status.json` 中对应功能的状态更新为 `done`/`passed`
 
-**质量门禁：** 第7步必须通过（`flutter analyze` 零 error + `flutter test` 全过），否则视为未完成。
+**质量门禁：** 第7步必须通过（`flutter analyze` 0 issues + `flutter test` 全过），否则视为未完成。

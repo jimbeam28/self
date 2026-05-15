@@ -13,7 +13,6 @@ import 'package:nas_audio_player/core/database/dao/connection_dao.dart';
 import 'package:nas_audio_player/core/database/database_helper.dart';
 import 'package:nas_audio_player/features/connection/connection_provider.dart';
 import 'package:nas_audio_player/shared/models/connection_config.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

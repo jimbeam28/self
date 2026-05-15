@@ -9,7 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/network/webdav_client.dart';
-import '../../shared/models/connection_config.dart';
 import '../../shared/models/nas_file.dart';
 import '../../shared/models/play_progress.dart';
 import '../../shared/models/play_queue.dart';
@@ -57,7 +56,7 @@ class SortOptionNotifier extends StateNotifier<SortOption> {
 
   void _load() {
     if (_prefs == null) return;
-    final saved = _prefs!.getString(_key);
+    final saved = _prefs.getString(_key);
     if (saved != null) {
       state = SortOption.values.cast<SortOption?>().firstWhere(
             (e) => e!.name == saved,

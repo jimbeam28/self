@@ -147,7 +147,7 @@ void main() {
 
     test('BRW-T22: directory type NasFile has audioType null', () {
       // Directly constructed directory
-      final dir = NasFile(
+      const dir = NasFile(
         name: 'music',
         path: '/music',
         isDirectory: true,

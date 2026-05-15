@@ -555,7 +555,7 @@ void main() {
       final state = container.read(timerStateProvider);
       expect(state, isNotNull);
       expect(state!.mode, equals(TimerMode.duration));
-      expect(state!.remainingTime, isNotNull);
+      expect(state.remainingTime, isNotNull);
     });
 
     // ── TMR-T25: 「播完当前」模式激活时 ──────────────────────────────

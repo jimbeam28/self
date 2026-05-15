@@ -7,13 +7,14 @@
 //   - Empty    → "此目录为空" message
 //   - Data     → scrollable list of directory + audio-file tiles
 
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/network/webdav_client.dart';
 import '../../shared/models/nas_file.dart';
-import '../../shared/models/play_progress.dart';
 import '../../shared/models/play_queue.dart';
 import '../player/widgets/mini_player_bar.dart';
 import '../progress/progress_dialog.dart';
@@ -130,7 +131,7 @@ class BrowserScreen extends ConsumerWidget {
                       final currentPath =
                           ref.read(navigationStackProvider).last;
                       ref.read(clearDirectoryCacheProvider)(currentPath);
-                      await ref.refresh(
+                      final _ = await ref.refresh(
                           directoryContentsProvider(currentPath).future);
                     },
                     child: _FileList(

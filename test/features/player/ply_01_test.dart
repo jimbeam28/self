@@ -11,7 +11,6 @@
 
 import 'dart:convert';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:nas_audio_player/core/network/webdav_client.dart';
@@ -182,7 +181,7 @@ void main() {
 
   group('PLY-T03: Error handling', () {
     test('WebDavException for network error has correct properties', () {
-      final ex = const WebDavException('无法连接到服务器');
+      const ex = WebDavException('无法连接到服务器');
       expect(ex.message, equals('无法连接到服务器'));
       expect(ex.statusCode, isNull);
       expect(ex.isAuthError, isFalse,
@@ -305,8 +304,8 @@ void main() {
 
   group('PLY-T06: Auth error (401) handling', () {
     test('WebDavException with 401 has isAuthError true', () {
-      final ex =
-          const WebDavException('用户名或密码错误', statusCode: 401);
+      const ex =
+          WebDavException('用户名或密码错误', statusCode: 401);
       expect(ex.isAuthError, isTrue,
           reason: '状态码 401 的异常 isAuthError 应为 true');
       expect(ex.statusCode, equals(401));
@@ -314,7 +313,7 @@ void main() {
     });
 
     test('WebDavException with 403 has isAuthError true', () {
-      final ex = const WebDavException('禁止访问', statusCode: 403);
+      const ex = WebDavException('禁止访问', statusCode: 403);
       expect(ex.isAuthError, isTrue,
           reason: '状态码 403 的异常也应标记为认证错误');
     });

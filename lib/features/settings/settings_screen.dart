@@ -194,7 +194,7 @@ class _ThemeModeTile extends ConsumerWidget {
 
   void _showThemeDialog(
       BuildContext context, WidgetRef ref, ThemeMode currentMode) {
-    final modes = ThemeMode.values;
+    const modes = ThemeMode.values;
 
     showDialog<void>(
       context: context,
