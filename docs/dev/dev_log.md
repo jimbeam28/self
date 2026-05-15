@@ -833,3 +833,22 @@
 - 通过: 2 / 总计: 2（work_items 检查项）
 - 静态分析通过，无新增 error/warning
 
+---
+
+## [2026-05-15 14:08] A-2 - 迷你播放栏进入播放页面不重新加载
+
+**优先级**: P0
+**关联问题**: BUG-2a
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/player/player_screen.dart` — initState() 中 addPostFrameCallback 添加播放状态检测，若已在播放/就绪则跳过 _loadAndPlay()
+
+### 验证结果
+- 通过: 2 / 总计: 2（work_items 检查项）
+- 静态分析通过，无新增 error/warning
+
+### 备注
+- 根因: initState() 无条件调用 _loadAndPlay()，导致 player.stop() + 重新加载音频源，音乐从头播放
+- 修复后: 检测到 player.playing 或 processingState==ready 时直接设置 _loadState=ready，不中断播放
+

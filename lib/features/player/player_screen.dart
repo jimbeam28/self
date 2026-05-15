@@ -55,7 +55,14 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     WidgetsBinding.instance.addObserver(this);
     // Defer the async load to the next frame so that build() runs first
     // and the loading spinner appears immediately.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadAndPlay());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final player = ref.read(audioPlayerProvider);
+      if (player.playing || player.processingState == ProcessingState.ready) {
+        setState(() => _loadState = PlayerLoadState.ready);
+      } else {
+        _loadAndPlay();
+      }
+    });
 
     // TMR-05: check for duration-timer expiry every second.
     _timerExpiryChecker = Timer.periodic(const Duration(seconds: 1), (_) {
