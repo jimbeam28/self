@@ -817,3 +817,19 @@
 - 根因: _state 为 late 字段，build() 阶段的 _needsValidation() 在 initState() 之前访问导致 LateInitializationError
 - isAttached 守卫确保表单未挂载时跳过字段值比较
 
+---
+
+## [2026-05-15 14:05] A-4 - 默认播放速度设置应用
+
+**优先级**: P0
+**关联问题**: BUG-3b
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/player/player_screen.dart` — _loadAndPlay() 中 player.play() 前读取 defaultSpeedProvider 并应用 player.setSpeed()
+- `lib/features/player/player_provider.dart` — setDefaultSpeedProvider 中同步更新 currentSpeedProvider.notifier.state
+
+### 验证结果
+- 通过: 2 / 总计: 2（work_items 检查项）
+- 静态分析通过，无新增 error/warning
+

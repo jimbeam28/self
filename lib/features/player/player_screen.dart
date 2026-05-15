@@ -169,6 +169,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
       );
 
       // 6. Start playback
+      final defaultSpeed = ref.read(defaultSpeedProvider);
+      if (defaultSpeed != 1.0) {
+        await player.setSpeed(defaultSpeed);
+        ref.read(currentSpeedProvider.notifier).state = defaultSpeed;
+      }
       await player.play();
 
       // TMR-02: listen for track completion to trigger "stop after current".

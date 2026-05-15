@@ -18,7 +18,7 @@
             "lib/features/browser/browser_screen.dart",
             "lib/features/player/widgets/mini_player_bar.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "A-2": {
