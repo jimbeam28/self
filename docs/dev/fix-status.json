@@ -116,7 +116,7 @@
           "files_involved": [
             "lib/features/connection/connection_provider.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "H-2": {
@@ -134,7 +134,7 @@
           "files_involved": [
             "lib/features/browser/browser_provider.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "H-3": {
@@ -151,7 +151,7 @@
           "files_involved": [
             "lib/features/browser/browser_screen.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "H-4": {
@@ -170,7 +170,7 @@
           "files_involved": [
             "lib/shared/models/play_queue.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "H-5": {
@@ -187,7 +187,7 @@
           "files_involved": [
             "lib/features/player/widgets/mini_player_bar.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "H-6": {
@@ -204,7 +204,7 @@
           "files_involved": [
             "lib/features/timer/widgets/timer_button.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "H-7": {
@@ -220,7 +220,7 @@
           "files_involved": [
             "lib/features/connection/connection_provider.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "H-8": {
@@ -238,7 +238,7 @@
             "lib/features/browser/browser_provider.dart",
             "lib/core/database/dao/progress_dao.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "H-9": {
@@ -257,7 +257,7 @@
             "lib/features/settings/settings_provider.dart",
             "lib/features/settings/settings_screen.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "H-10": {
@@ -274,7 +274,7 @@
           "files_involved": [
             "lib/features/connection/connection_edit_screen.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         }
       }

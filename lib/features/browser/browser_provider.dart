@@ -5,6 +5,7 @@
 
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -198,9 +199,16 @@ final directoryContentsProvider =
   // 6. Sort with current sort option
   final sorted = sortFiles(filtered, sortOption);
 
-  // 7. Write to cache
+  // 7. Write to cache (H-2: limit to 50 entries to prevent unbounded growth)
   ref.read(directoryCacheProvider.notifier).update((state) {
-    return {...state, cacheKey: sorted};
+    final updated = {...state, cacheKey: sorted};
+    if (updated.length > 50) {
+      final keysToRemove = updated.keys.take(updated.length - 50).toList();
+      for (final k in keysToRemove) {
+        updated.remove(k);
+      }
+    }
+    return updated;
   });
 
   return sorted;
@@ -377,8 +385,9 @@ final restoreQueueFromPrefsProvider =
         }
       }
     }
-  } catch (_) {
-    // Corrupted data — ignore and let the user start fresh.
+  } catch (e) {
+    // H-8: log the error so corrupted data is debuggable.
+    debugPrint('restoreQueueFromPrefsProvider: $e');
   }
 });
 

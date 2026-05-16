@@ -121,6 +121,8 @@ final startupValidationProvider =
     FutureProvider<WebDavValidationResult?>((ref) async {
   final activeConn = await ref.watch(activeConnectionProvider.future);
   if (activeConn == null) return null;
+  // H-7: guard against null connection id from corrupted DB records.
+  if (activeConn.id == null) return WebDavValidationResult.authError();
 
   // Read the password from secure storage
   final storage = ref.watch(secureStorageProvider);
@@ -180,7 +182,13 @@ class ConnectionSaver {
 
     // Persist password under the permanent key
     final permanentKey = 'connection_password_$id';
-    await _storage.write(key: permanentKey, value: password);
+    try {
+      await _storage.write(key: permanentKey, value: password);
+    } catch (_) {
+      // H-1: rollback the DB insert if secure-storage write fails.
+      await _dao.delete(id);
+      rethrow;
+    }
 
     // Update the row to reference the permanent key
     final savedConfig = config.copyWith(id: id, isActive: true);

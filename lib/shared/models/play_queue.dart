@@ -105,7 +105,8 @@ class PlayQueue {
   /// PLY-T34 (shuffle returns different index), PLY-T35 (repeatOne).
   static int? nextIndex(int current, int length, PlayMode mode,
       {Random? random}) {
-    if (length == 0) return null;
+    // H-4: guard against out-of-bounds current index.
+    if (length == 0 || current < 0 || current >= length) return null;
     switch (mode) {
       case PlayMode.sequential:
         return current < length - 1 ? current + 1 : null;
@@ -131,7 +132,8 @@ class PlayQueue {
   /// items in the queue.  [random] is used for shuffle mode.
   static int? previousIndex(int current, int length, PlayMode mode,
       {Random? random}) {
-    if (length == 0) return null;
+    // H-4: guard against out-of-bounds current index.
+    if (length == 0 || current < 0 || current >= length) return null;
     switch (mode) {
       case PlayMode.sequential:
         return current > 0 ? current - 1 : null;
@@ -177,7 +179,7 @@ class PlayQueue {
         : PlayMode.sequential;
     return PlayQueue(
       files: files,
-      currentIndex: map['currentIndex'] as int,
+      currentIndex: map['currentIndex'] as int? ?? 0,
       startPositionMs: map['startPositionMs'] as int?,
       playMode: mode,
     );

@@ -321,7 +321,13 @@ class _NextButton extends ConsumerWidget {
               final updatedQueue = queue.withIndex(nextIdx);
               ref.read(currentPlayQueueProvider.notifier).state = updatedQueue;
               // D-1: delegate to the unified load+play entry point.
-              await ref.read(loadAndPlayProvider)();
+              final loaded = await ref.read(loadAndPlayProvider)();
+              // H-5: show feedback on failure.
+              if (loaded == null && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('切换失败，请检查连接')),
+                );
+              }
             }
           : null,
       icon: const Icon(Icons.skip_next),

@@ -187,13 +187,13 @@ class TimerBottomSheet extends ConsumerWidget {
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         TextButton(
-                          onPressed: () {
-                            final totalMinutes = selectedHours * 60 + selectedMinutes;
-                            if (totalMinutes > 0) {
-                              ref.read(startDurationTimerProvider)(totalMinutes);
-                            }
-                            Navigator.pop(ctx);
-                          },
+                          onPressed: selectedHours == 0 && selectedMinutes == 0
+                              ? null
+                              : () {
+                                  final totalMinutes = selectedHours * 60 + selectedMinutes;
+                                  ref.read(startDurationTimerProvider)(totalMinutes);
+                                  Navigator.pop(ctx);
+                                },
                           child: const Text('确认'),
                         ),
                       ],

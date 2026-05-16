@@ -7,6 +7,9 @@
 //   - Empty    → "此目录为空" message
 //   - Data     → scrollable list of directory + audio-file tiles
 
+// H-3 note: this file's primary interaction is an async callback that uses
+// context extensively after awaits.  Per-line suppressions would clutter the
+// handler unreasonably, so file-level suppression is kept intentionally.
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
