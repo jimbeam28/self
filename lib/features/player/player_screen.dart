@@ -175,34 +175,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
         password: password,
       );
 
-      // 4. Stop any existing playback and load the new source.
+      // 4. Register completion listener BEFORE stop so we capture the full
+      // lifecycle: stop → idle → loading → ready → playing → completed.
       final player = ref.read(audioPlayerProvider);
-      await player.stop();
-      await player.setAudioSource(source);
-
-      // 5. Seek to resume position if present
-      if (queue.startPositionMs != null) {
-        await player.seek(Duration(milliseconds: queue.startPositionMs!));
-      }
-
-      setState(() => _loadState = PlayerLoadState.ready);
-
-      // A-1: update notification with the current track info.
-      final handler = ref.read(audioHandlerProvider);
-      handler?.setMediaItemFromPath(
-        queue.current.path,
-        duration: player.duration,
-      );
-
-      // 6. Start playback
-      final defaultSpeed = ref.read(defaultSpeedProvider);
-      if (defaultSpeed != 1.0) {
-        await player.setSpeed(defaultSpeed);
-        ref.read(currentSpeedProvider.notifier).state = defaultSpeed;
-      }
-      await player.play();
-
-      // TMR-02: listen for track completion to trigger "stop after current".
       await _processingSubscription?.cancel();
       _processingSubscription = player.processingStateStream.listen((state) {
         if (state == ProcessingState.completed) {
@@ -219,6 +194,32 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
           }
         }
       });
+
+      // 5. Stop any existing playback and load the new source.
+      await player.stop();
+      await player.setAudioSource(source);
+
+      // 6. Seek to resume position if present
+      if (queue.startPositionMs != null) {
+        await player.seek(Duration(milliseconds: queue.startPositionMs!));
+      }
+
+      setState(() => _loadState = PlayerLoadState.ready);
+
+      // A-1: update notification with the current track info.
+      final handler = ref.read(audioHandlerProvider);
+      handler?.setMediaItemFromPath(
+        queue.current.path,
+        duration: player.duration,
+      );
+
+      // 7. Start playback
+      final defaultSpeed = ref.read(defaultSpeedProvider);
+      if (defaultSpeed != 1.0) {
+        await player.setSpeed(defaultSpeed);
+        ref.read(currentSpeedProvider.notifier).state = defaultSpeed;
+      }
+      await player.play();
 
       // PRG-01 trigger ①: auto-save progress every 10 seconds.
       _autoSaveTimer?.cancel();

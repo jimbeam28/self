@@ -19,6 +19,25 @@
 
 ---
 
+## [2026-05-16 10:35] A-2 - 修复曲目播完不自动下一曲
+
+**优先级**: P0
+**关联问题**: BUG-3
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/player/player_screen.dart` — 将 processingStateStream 监听注册移到 player.stop() 之前，确保捕获完整的 completed 事件
+
+### 验证结果
+- 通过: 3 / 总计: 3
+- 静态分析: No issues found
+- 测试: 全部 299 tests passed
+
+### 备注
+原代码在 await player.play() 之后才注册 processingStateStream 监听，此时 player.stop() 和 setAudioSource 已完成，可能错过 completed 状态。修复后将监听提前到 stop 之前，覆盖完整生命周期。
+
+---
+
 ## [2026-05-12 12:00] C-1 - CON-05/CON-06 补充滑动操作
 
 **优先级**: P2
