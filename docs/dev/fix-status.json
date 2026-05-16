@@ -296,7 +296,7 @@
           "files_involved": [
             "lib/core/services/timer_service.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "I-2": {
@@ -311,7 +311,7 @@
           "files_involved": [
             "lib/core/database/dao/connection_dao.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "I-3": {
@@ -326,7 +326,7 @@
           "files_involved": [
             "lib/core/network/webdav_client.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "I-4": {
@@ -358,7 +358,7 @@
           "files_involved": [
             "lib/features/browser/widgets/breadcrumb_bar.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "I-6": {
@@ -373,7 +373,7 @@
           "files_involved": [
             "lib/core/network/webdav_client.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "I-7": {
@@ -388,7 +388,7 @@
           "files_involved": [
             "lib/features/player/player_screen.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "I-8": {
@@ -401,7 +401,7 @@
             "确认 dismiss 表示用户取消，保持当前选择是合理默认行为"
           ],
           "files_involved": [],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "I-9": {
@@ -452,7 +452,7 @@
           "files_involved": [
             "lib/main.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "I-12": {

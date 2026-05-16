@@ -119,7 +119,8 @@ class ConnectionDao {
 
     await db.transaction((txn) async {
       // Cascade-delete any play_progress records (CON-T31).
-      // Table may not exist yet — silently ignore.
+      // I-2 note: the table is created in _onCreate, but test databases
+      // may use a different version path.  Keep the guard.
       try {
         await txn.delete('play_progress',
             where: 'connection_id = ?', whereArgs: [id]);

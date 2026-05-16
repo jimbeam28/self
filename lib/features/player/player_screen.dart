@@ -127,7 +127,10 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     if (state == null) return false;
     final source = state.currentSource;
     if (source is UriAudioSource) {
-      return source.uri.toString().contains(queue.current.path);
+      // I-7: use decoded-path comparison to avoid substring false matches
+      // (e.g. /song.mp3 incorrectly matching /folder/song.mp3).
+      final decoded = Uri.decodeComponent(source.uri.path);
+      return decoded.endsWith(queue.current.path);
     }
     return false;
   }

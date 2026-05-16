@@ -63,15 +63,17 @@ class TimerState {
     return !endTime!.isAfter(DateTime.now());
   }
 
+  // I-1: include startedAt so distinct timer instances compare correctly.
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is TimerState &&
           mode == other.mode &&
-          endTime == other.endTime;
+          endTime == other.endTime &&
+          startedAt == other.startedAt;
 
   @override
-  int get hashCode => Object.hash(mode, endTime);
+  int get hashCode => Object.hash(mode, endTime, startedAt);
 
   @override
   String toString() =>

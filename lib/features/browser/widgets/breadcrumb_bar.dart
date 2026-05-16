@@ -57,7 +57,6 @@ class BreadcrumbBar extends ConsumerWidget {
           final textPainter = TextPainter(textDirection: Directionality.of(context))
             ..text = TextSpan(text: '…', style: textStyle)
             ..layout();
-          // We use a TextPainter per segment for simplicity; reusing one is fine.
           final measuredWidths = <double>[];
           for (final seg in segments) {
             textPainter.text = TextSpan(text: seg.displayName, style: textStyle);
@@ -108,6 +107,8 @@ class BreadcrumbBar extends ConsumerWidget {
               ));
             }
           }
+          // I-5: release native resources held by the TextPainter.
+          textPainter.dispose();
 
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
