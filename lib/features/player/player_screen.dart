@@ -452,7 +452,17 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
                 .bodyMedium
                 ?.copyWith(color: Colors.grey),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          // Speed + Timer + Play mode — grouped above the progress bar
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _SpeedControl(),
+              _TimerControl(),
+              _PlayModeControl(),
+            ],
+          ),
+          const SizedBox(height: 16),
           // Progress slider with integrated time display
           const _ProgressSlider(),
           const SizedBox(height: 16),
@@ -461,14 +471,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
             onPrevious: _playPrevious,
             onNext: _playNext,
           ),
-          const SizedBox(height: 16),
-          // Speed control
-          const _SpeedControl(),
-          const SizedBox(height: 16),
-          // Timer button (TMR-01 ~ TMR-04)
-          const _TimerControl(),
-          const SizedBox(height: 16),
-          const _PlayModeControl(),
           const Spacer(),
         ],
       ),
