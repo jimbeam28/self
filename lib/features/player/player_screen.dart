@@ -710,8 +710,9 @@ class _PlaybackControls extends ConsumerWidget {
         ),
         const SizedBox(width: 8),
         // Skip backward
-        _buildSkipButton(
+        _buildSeekButton(
           icon: _iconForSeekBackward(seekStep),
+          seconds: seekStep,
           tooltip: '后退 ${seekStep}s',
           onPressed: () {
             final position = player.position;
@@ -746,9 +747,11 @@ class _PlaybackControls extends ConsumerWidget {
         ),
         const SizedBox(width: 24),
         // Skip forward
-        _buildSkipButton(
+        _buildSeekButton(
           icon: _iconForSeekForward(seekStep),
+          seconds: seekStep,
           tooltip: '前进 ${seekStep}s',
+          isForward: true,
           onPressed: () {
             final position = player.position;
             final duration = player.duration ?? Duration.zero;
@@ -785,6 +788,46 @@ class _PlaybackControls extends ConsumerWidget {
       case 30: return Icons.forward_30;
       default: return Icons.forward;
     }
+  }
+
+  /// Builds a seek button that shows an icon + time label for step values
+  /// that lack a dedicated Material icon (15s, 60s).  For 5s / 10s / 30s
+  /// the built-in numbered icons are used without a label.
+  Widget _buildSeekButton({
+    required IconData icon,
+    required int seconds,
+    String? tooltip,
+    bool enabled = true,
+    bool isForward = false,
+    VoidCallback? onPressed,
+  }) {
+    final needsLabel = seconds == 15 || seconds == 60;
+    if (!needsLabel) {
+      return _buildSkipButton(
+        icon: icon, tooltip: tooltip, enabled: enabled, onPressed: onPressed);
+    }
+
+    return InkWell(
+      onTap: enabled ? onPressed : null,
+      borderRadius: BorderRadius.circular(24),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 28, color: enabled ? null : Colors.grey),
+            Text(
+              '${seconds}s',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: enabled ? null : Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildSkipButton({
