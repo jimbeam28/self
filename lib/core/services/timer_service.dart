@@ -194,23 +194,18 @@ class TimerService {
 
   // ── TMR-03: Remaining-time display formatting ────────────────────────────
 
-  /// Formats a [remaining] duration for display. (TMR-03)
+  /// Formats a [remaining] duration for display as MM:SS. (TMR-03)
   ///
   /// - `null` → `null` (no timer active or afterCurrent mode)
-  /// - > 60 seconds → `"X分钟"` (e.g. `"14分钟"`) (TMR-T10)
-  /// - == 60 seconds → `"1分钟"` (TMR-T11)
-  /// - < 60 seconds → `"Xs"` (e.g. `"45s"`) (TMR-T12)
+  /// - Otherwise → `MM:SS` (e.g. `04:35`, `00:45`)
   ///
   /// The [remaining] parameter should come from [TimerState.remainingTime].
   String? formatRemaining(Duration? remaining) {
     if (remaining == null) return null;
-    if (remaining.inSeconds > 60) {
-      return '${remaining.inMinutes}分钟';
-    }
-    if (remaining.inSeconds == 60) {
-      return '1分钟';
-    }
-    return '${remaining.inSeconds}s';
+    final totalSeconds = remaining.inSeconds;
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   /// Returns the display string for the current timer state.

@@ -201,38 +201,38 @@ void main() {
       expect(formatted, isNotNull);
     });
 
-    test('TMR-T10: 剩余 > 60 秒时显示「X分钟」格式', () {
+    test('TMR-T10: 剩余 > 60 秒时显示 MM:SS 格式', () {
       final service = TimerService();
 
       expect(service.formatRemaining(const Duration(minutes: 14)),
-          equals('14分钟'));
+          equals('14:00'));
       expect(service.formatRemaining(const Duration(minutes: 5)),
-          equals('5分钟'));
+          equals('05:00'));
       expect(service.formatRemaining(const Duration(minutes: 2)),
-          equals('2分钟'));
+          equals('02:00'));
       expect(service.formatRemaining(const Duration(seconds: 61)),
-          equals('1分钟'));
+          equals('01:01'));
     });
 
-    test('TMR-T11: 剩余时间 == 60 秒时显示「1分钟」', () {
+    test('TMR-T11: 剩余时间 == 60 秒时显示 01:00', () {
       final service = TimerService();
       expect(service.formatRemaining(const Duration(seconds: 60)),
-          equals('1分钟'));
+          equals('01:00'));
     });
 
-    test('TMR-T12: 剩余时间 < 60 秒时显示「Xs」格式', () {
+    test('TMR-T12: 剩余时间 < 60 秒时显示 00:XX 格式', () {
       final service = TimerService();
 
       expect(service.formatRemaining(const Duration(seconds: 45)),
-          equals('45s'));
+          equals('00:45'));
       expect(service.formatRemaining(const Duration(seconds: 30)),
-          equals('30s'));
+          equals('00:30'));
       expect(service.formatRemaining(const Duration(seconds: 10)),
-          equals('10s'));
+          equals('00:10'));
       expect(service.formatRemaining(const Duration(seconds: 1)),
-          equals('1s'));
+          equals('00:01'));
       expect(service.formatRemaining(const Duration(seconds: 59)),
-          equals('59s'));
+          equals('00:59'));
     });
 
     test('TMR-T13: 「播完当前」模式 remainingTime 返回 null', () {
@@ -435,9 +435,9 @@ void main() {
       expect(service.formatRemaining(null), isNull);
     });
 
-    test('formatRemaining with Duration.zero returns 0s', () {
+    test('formatRemaining with Duration.zero returns 00:00', () {
       final service = TimerService();
-      expect(service.formatRemaining(Duration.zero), equals('0s'));
+      expect(service.formatRemaining(Duration.zero), equals('00:00'));
     });
   });
 

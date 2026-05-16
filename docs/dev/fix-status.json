@@ -19,7 +19,7 @@
           "files_involved": [
             "lib/features/player/player_screen.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "A-2": {
@@ -110,7 +110,7 @@
           "files_involved": [
             "lib/core/services/timer_service.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": []
         },
         "B-2": {

@@ -19,6 +19,22 @@
 
 ---
 
+## [2026-05-16 10:55] B-1 - 定时停止显示格式改为 MM:SS
+
+**优先级**: P1
+**关联问题**: BUG-4
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/core/services/timer_service.dart` — formatRemaining() 改为 MM:SS 格式
+- `test/features/timer/timer_test.dart` — 更新测试期望匹配新格式
+
+### 验证结果
+- 通过: 3 / 总计: 3
+- 测试: 全部 535 tests passed
+
+---
+
 ## [2026-05-16 10:50] A-4 - 修复设置默认播放速度后新曲目不生效
 
 **优先级**: P0
