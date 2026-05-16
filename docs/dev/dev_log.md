@@ -19,6 +19,26 @@
 
 ---
 
+## [2026-05-16 10:50] A-4 - 修复设置默认播放速度后新曲目不生效
+
+**优先级**: P0
+**关联问题**: BUG-10
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/player/player_provider.dart` — setDefaultSpeedProvider 中同步更新 currentSpeedProvider
+- `test/features/player/ply_07_test.dart` — 更新测试期望以匹配新行为
+
+### 验证结果
+- 通过: 4 / 总计: 4
+- 静态分析: No issues found
+- 测试: 全部 535 tests passed
+
+### 备注
+设置默认速度后立即同步 currentSpeedProvider，播放 UI 上的速度显示实时反映变更。AudioPlayer 的实际速度在下次 _loadAndPlay() 时应用（由 A-1 的队列匹配检测触发或选择新曲目时）。
+
+---
+
 ## [2026-05-16 10:45] A-5 - 修复 seekStep 图标动态显示步长
 
 **优先级**: P0

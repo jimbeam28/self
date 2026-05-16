@@ -343,8 +343,8 @@ void main() {
       // defaultSpeed changed to 0.5
       expect(container.read(defaultSpeedProvider), equals(0.5));
 
-      // currentSpeed still at 2.0 (current playback unaffected by settings change)
-      expect(container.read(currentSpeedProvider), equals(2.0));
+      // currentSpeed syncs to the new default so the player UI reflects it.
+      expect(container.read(currentSpeedProvider), equals(0.5));
 
       // But a NEW file would initialize to the new default (0.5) —
       // simulated by creating a new container:

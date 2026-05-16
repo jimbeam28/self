@@ -267,6 +267,10 @@ final setDefaultSpeedProvider = Provider<void Function(double)>((ref) {
     final prefs = ref.read(sharedPreferencesProvider);
     prefs?.setDouble(_defaultSpeedKey, speed);
     ref.invalidate(defaultSpeedProvider);
+    // Sync the runtime speed provider so the player UI reflects the change
+    // immediately.  The next _loadAndPlay() (triggered by A-1's queue-match
+    // logic or by selecting a new song) will apply the speed to AudioPlayer.
+    ref.read(currentSpeedProvider.notifier).state = speed;
   };
 });
 
