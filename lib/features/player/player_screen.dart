@@ -684,6 +684,8 @@ class _PlaybackControls extends ConsumerWidget {
         return Icons.replay_10;
       case 30:
         return Icons.replay_30;
+      case 60:
+        return Icons.replay;
       default:
         return Icons.replay;
     }
@@ -697,6 +699,8 @@ class _PlaybackControls extends ConsumerWidget {
         return Icons.forward_10;
       case 30:
         return Icons.forward_30;
+      case 60:
+        return Icons.replay;
       default:
         return Icons.replay;
     }

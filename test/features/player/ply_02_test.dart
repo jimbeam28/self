@@ -229,6 +229,45 @@ void main() {
     });
   });
 
+  group('C-2: seekStep 60 icon mapping', () {
+    testWidgets('60-second seek buttons use circular replay icons',
+        (tester) async {
+      final player = MockAudioPlayer();
+
+      when(player.positionStream)
+          .thenAnswer((_) => Stream.value(const Duration(seconds: 12)));
+      when(player.durationStream)
+          .thenAnswer((_) => Stream.value(const Duration(minutes: 3)));
+      when(player.playerStateStream).thenAnswer(
+        (_) => Stream.value(PlayerState(false, ProcessingState.ready)),
+      );
+      when(player.speedStream).thenAnswer((_) => Stream.value(1.0));
+      when(player.position).thenReturn(const Duration(seconds: 12));
+      when(player.duration).thenReturn(const Duration(minutes: 3));
+      when(player.sequenceState).thenReturn(null);
+
+      final queue = PlayQueue(
+        files: [
+          _audio('first.mp3', '/music/first.mp3'),
+          _audio('second.mp3', '/music/second.mp3'),
+        ],
+        currentIndex: 0,
+      );
+
+      await tester.pumpWidget(
+        _wrapPlayerScreen(player: player, queue: queue, seekStep: 60),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.text('60s'), findsNWidgets(2));
+      expect(find.byIcon(Icons.replay), findsNWidgets(2),
+          reason: '60 秒快进/快退应都使用回转箭头语义');
+      expect(find.byIcon(Icons.forward), findsNothing,
+          reason: '60 秒不应再回退到直线前进箭头');
+    });
+  });
+
   // ── PLY-T10: seek to a valid in-range position ──────────────────────────
 
   group('PLY-T10: clampSeek — in-range target', () {

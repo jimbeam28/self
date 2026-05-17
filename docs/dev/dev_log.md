@@ -1,5 +1,24 @@
 ---
 
+## [2026-05-17 17:51] C-2 - 修复 60 秒步长图标走错分支
+
+**优先级**: P2
+**关联问题**: 60 秒显示直线箭头
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/player/player_screen.dart` — 为 60 秒快进/快退增加显式图标分支，避免落入默认分支
+- `test/features/player/ply_02_test.dart` — 新增 60 秒步长 UI 断言，验证快进/快退都显示回转箭头且不再出现直线箭头
+
+### 验证结果
+- 通过: 2 / 总计: 2（work_items 检查项）
+- `flutter test test/features/player/ply_02_test.dart`：通过
+- `flutter analyze`：0 issues
+- `flutter test`：全量通过
+
+### 备注
+- 60 秒现在与其它快进/快退步长保持同一套回转箭头语义，不再依赖默认分支回退。
+
 ## [2026-05-17 17:45] C-1 - 修复快进按钮图标为回转箭头语义
 
 **优先级**: P2
