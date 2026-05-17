@@ -698,7 +698,7 @@ class _PlaybackControls extends ConsumerWidget {
       case 30:
         return Icons.forward_30;
       default:
-        return Icons.forward;
+        return Icons.replay;
     }
   }
 
@@ -722,7 +722,11 @@ class _PlaybackControls extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 28, color: enabled ? null : Colors.grey),
+            _buildSeekIcon(
+              icon: icon,
+              isForward: isForward,
+              enabled: enabled,
+            ),
             Text(
               '${seconds}s',
               style: TextStyle(
@@ -735,6 +739,25 @@ class _PlaybackControls extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildSeekIcon({
+    required IconData icon,
+    required bool isForward,
+    required bool enabled,
+  }) {
+    final color = enabled ? null : Colors.grey;
+    final iconWidget = Icon(icon, size: 28, color: color);
+
+    if (isForward && icon == Icons.replay) {
+      return Transform(
+        alignment: Alignment.center,
+        transform: Matrix4.diagonal3Values(-1, 1, 1),
+        child: iconWidget,
+      );
+    }
+
+    return iconWidget;
   }
 
   Widget _buildSkipButton({
