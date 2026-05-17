@@ -47,9 +47,7 @@ class TimerButton extends ConsumerWidget {
       onPressed: () => _showBottomSheet(context, ref, isActive),
       icon: Icon(
         Icons.hourglass_bottom,
-        color: isActive
-            ? Theme.of(context).colorScheme.primary
-            : null,
+        color: isActive ? Theme.of(context).colorScheme.primary : null,
       ),
       tooltip: isActive ? (displayText ?? '定时中') : '定时',
     );
@@ -87,202 +85,224 @@ class TimerBottomSheet extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              '定时停止播放',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  '定时停止播放',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ),
-          ),
-          const Divider(height: 1),
-          // Duration options (TMR-01)
-          _TimerOptionTile(
-            icon: Icons.timer,
-            label: '5 分钟',
-            onTap: () {
-              ref.read(startDurationTimerProvider)(5);
-              Navigator.of(context).pop();
-            },
-          ),
-          _TimerOptionTile(
-            icon: Icons.timer,
-            label: '10 分钟',
-            onTap: () {
-              ref.read(startDurationTimerProvider)(10);
-              Navigator.of(context).pop();
-            },
-          ),
-          // Stop after current (TMR-02)
-          _TimerOptionTile(
-            icon: Icons.skip_next,
-            label: '播完当前',
-            onTap: () {
-              ref.read(startAfterCurrentProvider)();
-              Navigator.of(context).pop();
-            },
-          ),
-          // Custom duration
-          _TimerOptionTile(
-            icon: Icons.more_time,
-            label: '自定义',
-            onTap: () {
-              Navigator.of(context).pop();
-              _showCustomTimerPicker(context, ref);
-            },
-          ),
-          // Cancel option (TMR-04), only when active
-          if (isActive) ...[
-            const Divider(height: 1),
-            _TimerOptionTile(
-              icon: Icons.cancel,
-              label: '取消定时',
-              textColor: Colors.red,
-              iconColor: Colors.red,
-              onTap: () {
-                ref.read(cancelTimerProvider)();
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-          const SizedBox(height: 8),
-        ],
+              const Divider(height: 1),
+              _TimerOptionTile(
+                icon: Icons.timer,
+                label: '5 分钟',
+                onTap: () {
+                  ref.read(startDurationTimerProvider)(5);
+                  Navigator.of(context).pop();
+                },
+              ),
+              _TimerOptionTile(
+                icon: Icons.timer,
+                label: '10 分钟',
+                onTap: () {
+                  ref.read(startDurationTimerProvider)(10);
+                  Navigator.of(context).pop();
+                },
+              ),
+              _TimerOptionTile(
+                icon: Icons.skip_next,
+                label: '播完当前',
+                onTap: () {
+                  ref.read(startAfterCurrentProvider)();
+                  Navigator.of(context).pop();
+                },
+              ),
+              _TimerOptionTile(
+                icon: Icons.more_time,
+                label: '自定义',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showCustomTimerPicker(context);
+                },
+              ),
+              if (isActive) ...[
+                const Divider(height: 1),
+                _TimerOptionTile(
+                  icon: Icons.cancel,
+                  label: '取消定时',
+                  textColor: Colors.red,
+                  iconColor: Colors.red,
+                  onTap: () {
+                    ref.read(cancelTimerProvider)();
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+              const SizedBox(height: 8),
+            ],
           ),
         ),
       ),
     );
   }
 
-  void _showCustomTimerPicker(BuildContext context, WidgetRef ref) {
-    int selectedHours = 0;
-    int selectedMinutes = 5;
-
-    final fixedHourCtrl = FixedExtentScrollController(initialItem: selectedHours);
-    final fixedMinuteCtrl = FixedExtentScrollController(initialItem: selectedMinutes);
-
-    showModalBottomSheet(
+  void _showCustomTimerPicker(BuildContext context) {
+    showModalBottomSheet<void>(
       context: context,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setSheetState) {
-            return SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header: cancel / title / confirm
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          style: TextButton.styleFrom(foregroundColor: Colors.grey),
-                          child: const Text('取消'),
-                        ),
-                        const Text(
-                          '自定义时长',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        TextButton(
-                          onPressed: selectedHours == 0 && selectedMinutes == 0
-                              ? null
-                              : () {
-                                  final totalMinutes = selectedHours * 60 + selectedMinutes;
-                                  ref.read(startDurationTimerProvider)(totalMinutes);
-                                  Navigator.pop(ctx);
-                                },
-                          child: const Text('确认'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  // Scroll pickers — hours : minutes
-                  SizedBox(
-                    height: 200,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Hours
-                        SizedBox(
-                          width: 80,
-                          child: ListWheelScrollView.useDelegate(
-                            controller: fixedHourCtrl,
-                            itemExtent: 40,
-                            diameterRatio: 2.0,
-                            physics: const FixedExtentScrollPhysics(),
-                            onSelectedItemChanged: (index) {
-                              setSheetState(() => selectedHours = index);
-                            },
-                            childDelegate: ListWheelChildBuilderDelegate(
-                              childCount: 24,
-                              builder: (context, index) {
-                                return Center(
-                                  child: Text(
-                                    '$index',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: index == selectedHours
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                      color: index == selectedHours
-                                          ? Theme.of(context).colorScheme.primary
-                                          : null,
-                                    ),
-                                  ),
-                                );
-                              },
+      builder: (ctx) => const _CustomTimerPickerSheet(),
+    );
+  }
+}
+
+class _CustomTimerPickerSheet extends ConsumerStatefulWidget {
+  const _CustomTimerPickerSheet();
+
+  @override
+  ConsumerState<_CustomTimerPickerSheet> createState() =>
+      _CustomTimerPickerSheetState();
+}
+
+class _CustomTimerPickerSheetState
+    extends ConsumerState<_CustomTimerPickerSheet> {
+  static const int _initialHours = 0;
+  static const int _initialMinutes = 5;
+
+  late int _selectedHours;
+  late int _selectedMinutes;
+  late final FixedExtentScrollController _hourController;
+  late final FixedExtentScrollController _minuteController;
+
+  int get _totalMinutes => _selectedHours * 60 + _selectedMinutes;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedHours = _initialHours;
+    _selectedMinutes = _initialMinutes;
+    _hourController = FixedExtentScrollController(initialItem: _selectedHours);
+    _minuteController =
+        FixedExtentScrollController(initialItem: _selectedMinutes);
+  }
+
+  @override
+  void dispose() {
+    _hourController.dispose();
+    _minuteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(foregroundColor: Colors.grey),
+                  child: const Text('取消'),
+                ),
+                const Text(
+                  '自定义时长',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                TextButton(
+                  onPressed: _totalMinutes == 0
+                      ? null
+                      : () {
+                          ref.read(startDurationTimerProvider)(_totalMinutes);
+                          Navigator.pop(context);
+                        },
+                  child: const Text('确认'),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          SizedBox(
+            height: 200,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 80,
+                  child: ListWheelScrollView.useDelegate(
+                    controller: _hourController,
+                    itemExtent: 40,
+                    diameterRatio: 2.0,
+                    physics: const FixedExtentScrollPhysics(),
+                    onSelectedItemChanged: (index) {
+                      setState(() => _selectedHours = index);
+                    },
+                    childDelegate: ListWheelChildBuilderDelegate(
+                      childCount: 24,
+                      builder: (context, index) {
+                        return Center(
+                          child: Text(
+                            '$index',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: index == _selectedHours
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: index == _selectedHours
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
                             ),
                           ),
-                        ),
-                        const Text('小时', style: TextStyle(fontSize: 16)),
-                        const SizedBox(width: 24),
-                        // Minutes
-                        SizedBox(
-                          width: 80,
-                          child: ListWheelScrollView.useDelegate(
-                            controller: fixedMinuteCtrl,
-                            itemExtent: 40,
-                            diameterRatio: 2.0,
-                            physics: const FixedExtentScrollPhysics(),
-                            onSelectedItemChanged: (index) {
-                              setSheetState(() => selectedMinutes = index);
-                            },
-                            childDelegate: ListWheelChildBuilderDelegate(
-                              childCount: 60,
-                              builder: (context, index) {
-                                return Center(
-                                  child: Text(
-                                    index.toString().padLeft(2, '0'),
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: index == selectedMinutes
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                      color: index == selectedMinutes
-                                          ? Theme.of(context).colorScheme.primary
-                                          : null,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        const Text('分钟', style: TextStyle(fontSize: 16)),
-                      ],
+                        );
+                      },
                     ),
                   ),
-                  const SizedBox(height: 8),
-                ],
-              ),
-            );
-          },
-        );
-      },
+                ),
+                const Text('小时', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 24),
+                SizedBox(
+                  width: 80,
+                  child: ListWheelScrollView.useDelegate(
+                    controller: _minuteController,
+                    itemExtent: 40,
+                    diameterRatio: 2.0,
+                    physics: const FixedExtentScrollPhysics(),
+                    onSelectedItemChanged: (index) {
+                      setState(() => _selectedMinutes = index);
+                    },
+                    childDelegate: ListWheelChildBuilderDelegate(
+                      childCount: 60,
+                      builder: (context, index) {
+                        return Center(
+                          child: Text(
+                            index.toString().padLeft(2, '0'),
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: index == _selectedMinutes
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: index == _selectedMinutes
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const Text('分钟', style: TextStyle(fontSize: 16)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
     );
   }
 }

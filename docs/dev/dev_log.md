@@ -1,5 +1,26 @@
 ---
 
+## [2026-05-17 17:10] B-1 - 修复自定义定时确认按钮无响应
+
+**优先级**: P1
+**关联问题**: BUG-3
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/timer/widgets/timer_button.dart` — 将自定义定时弹窗重构为独立有状态组件，稳定管理小时/分钟与确认按钮启用态
+- `test/features/timer/timer_test.dart` — 补充 0:00 禁用确认与非 0 时长确认后启动定时的 widget 测试
+
+### 验证结果
+- 通过: 3 / 总计: 3（work_items 检查项）
+- `flutter analyze`：0 issues
+- `flutter test test/features/timer/timer_test.dart`：通过
+- `flutter test`：全量通过
+
+### 备注
+- 自定义定时不再依赖 `StatefulBuilder + 局部变量`，确认按钮读取的是组件稳定状态，避免出现“已选择时长但确认无反应”。
+
+---
+
 ## [2026-05-17 17:04] A-2 - 重构进度恢复入口，移除 5 秒自动弹窗导航竞态
 
 **优先级**: P0

@@ -69,6 +69,10 @@ Future<void> pumpTimerWidget(WidgetTester tester, Widget child) async {
   await tester.pumpWidget(wrapWithTimerProviders(child));
 }
 
+ProviderContainer timerContainerOf(WidgetTester tester) {
+  return ProviderScope.containerOf(tester.element(find.byType(TimerButton)));
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Unit tests — TMR-01: 设置固定时长定时
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -147,7 +151,8 @@ void main() {
       expect(service.isActive, isTrue);
     });
 
-    test('TMR-T06: 「播完当前」模式下曲目播放完成 → onTrackCompleted '
+    test(
+        'TMR-T06: 「播完当前」模式下曲目播放完成 → onTrackCompleted '
         '返回 true', () {
       final service = TimerService();
       service.startAfterCurrent();
@@ -175,7 +180,8 @@ void main() {
           reason: 'should not trigger again after state is cleared');
     });
 
-    test('TMR-T08: 「播完当前」模式下手动切换到下一首 — '
+    test(
+        'TMR-T08: 「播完当前」模式下手动切换到下一首 — '
         'stopAfterCurrent 不影响手动切换', () {
       final service = TimerService();
       service.startAfterCurrent();
@@ -206,10 +212,10 @@ void main() {
 
       expect(service.formatRemaining(const Duration(minutes: 14)),
           equals('14:00'));
-      expect(service.formatRemaining(const Duration(minutes: 5)),
-          equals('05:00'));
-      expect(service.formatRemaining(const Duration(minutes: 2)),
-          equals('02:00'));
+      expect(
+          service.formatRemaining(const Duration(minutes: 5)), equals('05:00'));
+      expect(
+          service.formatRemaining(const Duration(minutes: 2)), equals('02:00'));
       expect(service.formatRemaining(const Duration(seconds: 61)),
           equals('01:01'));
     });
@@ -229,8 +235,8 @@ void main() {
           equals('00:30'));
       expect(service.formatRemaining(const Duration(seconds: 10)),
           equals('00:10'));
-      expect(service.formatRemaining(const Duration(seconds: 1)),
-          equals('00:01'));
+      expect(
+          service.formatRemaining(const Duration(seconds: 1)), equals('00:01'));
       expect(service.formatRemaining(const Duration(seconds: 59)),
           equals('00:59'));
     });
@@ -313,8 +319,7 @@ void main() {
   // ═════════════════════════════════════════════════════════════════════════
 
   group('TMR-05: 定时到期执行停止', () {
-    test('TMR-T19: 5 分钟定时到期 — checkExpired 返回 true, state 变为 null',
-        () {
+    test('TMR-T19: 5 分钟定时到期 — checkExpired 返回 true, state 变为 null', () {
       final service = TimerService();
       service.startDuration(0); // 0 min = already expired
       expect(service.isActive, isTrue);
@@ -337,7 +342,8 @@ void main() {
       expect(service.isActive, isFalse);
     });
 
-    test('TMR-T21: 定时到期时 pause 应被调用 '
+    test(
+        'TMR-T21: 定时到期时 pause 应被调用 '
         '(checkExpired 不依赖前后台状态)', () {
       final service = TimerService();
       service.startDuration(0);
@@ -571,8 +577,7 @@ void main() {
 
     // ── TMR-T26: 点击未激活的定时按钮 → 弹出 4 选项菜单 ───────────
 
-    testWidgets('TMR-T26: 点击未激活的定时按钮弹出 4 选项菜单',
-        (tester) async {
+    testWidgets('TMR-T26: 点击未激活的定时按钮弹出 4 选项菜单', (tester) async {
       await pumpTimerWidget(tester, const TimerButton());
 
       await tester.tap(find.byType(IconButton));
@@ -587,8 +592,7 @@ void main() {
 
     // ── TMR-T27: 定时激活时点击 → 显示 5 个选项（含取消） ─────────
 
-    testWidgets('TMR-T27: 定时激活时点击定时按钮弹出含取消选项的菜单',
-        (tester) async {
+    testWidgets('TMR-T27: 定时激活时点击定时按钮弹出含取消选项的菜单', (tester) async {
       // Use a wrapper that activates the timer BEFORE building the UI,
       // so the TimerButton initially sees an active timer.
       await tester.pumpWidget(
@@ -616,8 +620,7 @@ void main() {
 
     // ── TMR-T28: 在 BottomSheet 中选择 10 分钟 → 关闭，按钮更新 ───
 
-    testWidgets(
-        'TMR-T28: 在 BottomSheet 中选择 10 分钟 — sheet 关闭，定时激活',
+    testWidgets('TMR-T28: 在 BottomSheet 中选择 10 分钟 — sheet 关闭，定时激活',
         (tester) async {
       await pumpTimerWidget(tester, const TimerButton());
 
@@ -639,8 +642,7 @@ void main() {
 
     // ── TMR-T29: 在 BottomSheet 中点击「取消定时」→ 恢复未激活 ──────
 
-    testWidgets(
-        'TMR-T29: 在 BottomSheet 中点击「取消定时」— sheet 关闭，按钮恢复',
+    testWidgets('TMR-T29: 在 BottomSheet 中点击「取消定时」— sheet 关闭，按钮恢复',
         (tester) async {
       await tester.pumpWidget(
         ProviderScope(
@@ -663,6 +665,40 @@ void main() {
 
       // Bottom sheet should be dismissed, timer should be inactive
       expect(find.text('取消定时'), findsNothing);
+    });
+
+    testWidgets('自定义定时选择 0:00 时确认按钮禁用', (tester) async {
+      await pumpTimerWidget(tester, const TimerButton());
+
+      await tester.tap(find.byType(IconButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('自定义'));
+      await tester.pumpAndSettle();
+
+      final minuteWheel = find.byType(ListWheelScrollView).last;
+      await tester.drag(minuteWheel, const Offset(0, 220));
+      await tester.pumpAndSettle();
+
+      final confirm =
+          tester.widget<TextButton>(find.widgetWithText(TextButton, '确认'));
+      expect(confirm.onPressed, isNull, reason: '选择 0 小时 0 分钟时确认按钮应禁用');
+    });
+
+    testWidgets('自定义定时选择非 0 时长后确认会启动定时', (tester) async {
+      await pumpTimerWidget(tester, const TimerButton());
+      final container = timerContainerOf(tester);
+
+      await tester.tap(find.byType(IconButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('自定义'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('确认'));
+      await tester.pumpAndSettle();
+
+      final state = container.read(timerStateProvider);
+      expect(state, isNotNull);
+      expect(state!.mode, equals(TimerMode.duration));
+      expect(state.endTime, isNotNull);
     });
   });
 }
