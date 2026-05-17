@@ -149,6 +149,7 @@ class MiniPlayerBar extends ConsumerWidget {
 void _showQueueSheet(BuildContext context, WidgetRef ref, PlayQueue queue) {
   showModalBottomSheet(
     context: context,
+    isScrollControlled: true,
     builder: (ctx) => QueueSheet(
       queue: queue,
       errorMessage: '无法加载音频，请检查连接配置',

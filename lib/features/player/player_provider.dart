@@ -181,8 +181,12 @@ class SerializedRequestGate {
         final result = await request.task(request.requestId);
         request.complete(
             isLatest(request.requestId) ? result : request.onSuperseded());
-      } catch (_) {
-        request.complete(request.onSuperseded());
+      } catch (e) {
+        if (isLatest(request.requestId)) {
+          request.completer.completeError(e);
+        } else {
+          request.complete(request.onSuperseded());
+        }
       } finally {
         _running = false;
         final next = _pendingRequest;
@@ -857,7 +861,8 @@ final Provider<Future<TrackLoadResult> Function()> loadAndPlayProvider =
           ref.read(_startPauseSaveProvider)(player);
 
           return TrackLoadResult.loaded(player);
-        } catch (_) {
+        } catch (e, st) {
+          debugPrint('loadAndPlayProvider error: $e\n$st');
           return const TrackLoadResult.failed();
         }
       },

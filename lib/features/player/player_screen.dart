@@ -162,33 +162,35 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     setState(() => _loadState = PlayerLoadState.loading);
     final requestToken = ++_loadRequestToken;
 
-    late final TrackLoadResult loaded;
     try {
-      loaded = await request().timeout(const Duration(seconds: 15));
-    } on TimeoutException {
-      if (!mounted || requestToken != _loadRequestToken) return;
-      setState(() {
-        _loadState = PlayerLoadState.error('加载超时，请重试');
-      });
-      return;
-    }
-
-    if (!mounted || requestToken != _loadRequestToken) return;
-
-    if (loaded.isLoaded) {
-      setState(() => _loadState = PlayerLoadState.ready);
-    } else if (loaded.isSuperseded) {
-      setState(() {
-        _loadState = PlayerLoadState.error('加载已被新的播放请求替换');
-      });
-    } else {
-      // Determine the specific error reason from provider state.
-      final activeConn = ref.read(activeConnectionProvider).valueOrNull;
-      if (activeConn == null) {
+      late final TrackLoadResult loaded;
+      try {
+        loaded = await request().timeout(const Duration(seconds: 15));
+      } on TimeoutException {
+        if (!mounted || requestToken != _loadRequestToken) return;
         setState(() {
-          _loadState = PlayerLoadState.error('没有活跃的连接', isAuthError: true);
+          _loadState = PlayerLoadState.error('加载超时，请重试');
+        });
+        return;
+      }
+
+      if (!mounted || requestToken != _loadRequestToken) return;
+
+      if (loaded.isLoaded) {
+        setState(() => _loadState = PlayerLoadState.ready);
+      } else if (loaded.isSuperseded) {
+        setState(() {
+          _loadState = PlayerLoadState.error('加载已被新的播放请求替换');
         });
       } else {
+        // Determine the specific error reason from provider state.
+        final activeConn = ref.read(activeConnectionProvider).valueOrNull;
+        if (activeConn == null) {
+          setState(() {
+            _loadState = PlayerLoadState.error('没有活跃的连接', isAuthError: true);
+          });
+          return;
+        }
         final storage = ref.read(secureStorageProvider);
         final pw =
             await storage.read(key: 'connection_password_${activeConn.id}');
@@ -202,6 +204,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
           });
         }
       }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadState = PlayerLoadState.error('加载失败');
+      });
     }
   }
 
@@ -230,6 +237,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   void _showQueueSheet(BuildContext context, PlayQueue queue) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) => QueueSheet(
         queue: queue,
         errorMessage: '无法加载音频，请检查连接配置',

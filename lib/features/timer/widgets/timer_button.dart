@@ -135,8 +135,16 @@ class TimerBottomSheet extends ConsumerWidget {
                 icon: Icons.more_time,
                 label: '自定义',
                 onTap: () {
+                  // Capture root navigator context BEFORE popping the timer sheet,
+                  // otherwise the context becomes invalid and the custom picker
+                  // sheet shows in a broken state (confirm button won't work).
+                  final rootCtx =
+                      Navigator.of(context, rootNavigator: true).context;
                   Navigator.of(context).pop();
-                  _showCustomTimerPicker(context);
+                  showModalBottomSheet<void>(
+                    context: rootCtx,
+                    builder: (_) => const _CustomTimerPickerSheet(),
+                  );
                 },
               ),
               if (isActive) ...[
@@ -160,12 +168,6 @@ class TimerBottomSheet extends ConsumerWidget {
     );
   }
 
-  void _showCustomTimerPicker(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (ctx) => const _CustomTimerPickerSheet(),
-    );
-  }
 }
 
 class _CustomTimerPickerSheet extends ConsumerStatefulWidget {

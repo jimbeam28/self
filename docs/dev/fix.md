@@ -1,8 +1,8 @@
 # 修复开发计划
 
-> 分析日期：2026-05-16
-> 来源：全代码审查（33 个 .dart 文件），共发现 43 个问题
-> 优先级分级：P0 内存泄漏/逻辑缺陷 → P1 功能隐患 → P2 代码质量/架构
+> 分析日期：2026-05-17
+> Bug 描述：播放器加载卡住、进度恢复黑屏、定时自定义确认无响应、快进图标异常、播放队列入口与滚动问题
+> 优先级分级：P0 核心功能崩溃/不可用 → P1 功能异常但可绕过 → P2 体验与一致性问题
 
 ---
 
@@ -10,438 +10,313 @@
 
 | 批次 | 优先级 | 任务数 | 说明 |
 |------|--------|--------|------|
-| Batch G | P0 | 5 | 内存泄漏、循环依赖、短音频进度清零、负值定时器、HTTP连接泄漏 |
-| Batch H | P1 | 10 | 非原子保存、无界缓存、lint抑制、不安全类型转换、静默错误吞噬 |
-| Batch I | P2 | 12 | 代码重复、正则缓存、版本硬编码、字符串匹配精度、路由守卫 |
+| Batch A | P0 | 2 | 播放核心链路卡死/黑屏 |
+| Batch B | P1 | 3 | 定时与队列交互异常 |
+| Batch C | P2 | 4 | UI 图标/布局与增强项 |
+| Batch I | P2 | 4 | 历史遗留未完成优化项 |
 
 ---
 
-## Batch G — P0 严重缺陷
+## Bug 分析
 
-### G-1  修复 NasAudioHandler StreamSubscription 内存泄漏
+### BUG-1 播放器页面长期停留“正在加载音频”
 
-**关联问题**：AudioHandler 创建 3 个 StreamSubscription 但 dispose() 从未被调用
+**现象**：从文件列表点歌后实际已开始播放，但播放器页长时间显示“正在加载音频”；在播放器内切上一曲/下一曲或从播放列表切歌时也会复现。
 
-**根因**：`audio_handler.dart:47-51` — `_stateSub`、`_positionSub`、`_durationSub` 在构造函数中创建。`dispose()` 方法存在（161-165行）但无任何代码调用它。`_audioHandler` 在 `main.dart` 中是顶层变量，`audioHandlerProvider` 只是透传引用，没有在应用退出时清理。
+**根因**：
+- `lib/features/player/player_screen.dart:138-181` 的 `_loadAndPlay()` 无并发保护，多个入口（`initState`、`_playNext`、`_playPrevious`、队列 onTap）都会触发加载。
+- `lib/features/player/player_screen.dart:194-205`、`207-219` 与 `240-286`（队列点击逻辑）会在前一次 load 尚未完成时再次发起 load，导致 `just_audio` stop/setAudioSource/play 链路竞争，UI 状态容易停留在 loading。
 
-**修复方案**：在 `audioPlayerProvider` 的 `ref.onDispose` 中调用 `audioHandler.dispose()`：
+**影响范围**：播放器主页面、队列切歌、上下曲操作。
 
-```dart
-// main.dart ProviderScope overrides 中：
-audioPlayerProvider.overrideWith((ref) {
-  final player = AudioPlayer();
-  ref.onDispose(() {
-    _audioHandler?.dispose();
-    player.dispose();
-  });
-  return player;
-}),
-```
+### BUG-2 “恢复播放进度”5秒后黑屏
 
-或在 `NasAudioHandler` 中重写 `AudioService.stop()` 时触发清理。
+**现象**：点歌曲后弹“恢复播放进度”，等待 5 秒自动继续后出现黑屏。
 
-**涉及文件**：
-- `lib/core/services/audio_handler.dart`
-- `lib/main.dart`
+**根因**：
+- `lib/features/browser/browser_screen.dart:175-229` 使用 `showProgressResumeDialog(...).then(...)` 异步回调 + `addPostFrameCallback` 再导航，链路较绕且吞掉时序错误。
+- `lib/features/progress/progress_dialog.dart:58-70` 到期自动 `pop(true)`，与外层 `then` 中再次调度 push 叠加，容易出现 context/route transition 竞态。
+- 需求层面当前实现为“每个文件都查进度+弹窗”，与“仅恢复当前播放歌曲一次”需求不一致，放大复现概率。
+
+**影响范围**：文件浏览页点歌入口、进度恢复体验。
+
+### BUG-3 自定义定时确认无响应
+
+**现象**：选择自定义时长后点击“确认”无反应。
+
+**根因**：`lib/features/timer/widgets/timer_button.dart:158-257` 自定义底部弹窗使用 `StatefulBuilder` + 局部变量承载选择状态，且文件存在明显结构异常（重复 `style` 片段与括号结构混乱），导致确认按钮状态与选择值更新不稳定。
+
+**影响范围**：自定义定时停止流程。
+
+### BUG-4 队列显示数量受限且无法滚动
+
+**现象**：播放列表只显示约 10 条，无法上下滑动查看当前队列。
+
+**根因**：
+- `lib/features/player/player_screen.dart:223-286` 与 `lib/features/player/widgets/mini_player_bar.dart:147-211` 都用 `Column(mainAxisSize: min) + ...List.generate` 渲染整队列，未使用可滚动容器。
+- 两处实现重复，后续改动容易不一致。
+
+**影响范围**：全屏播放器队列、迷你播放器队列。
 
 ---
 
-### G-2  打破 skipToNextProvider ↔ loadAndPlayProvider 循环依赖
+## Batch A — P0 严重缺陷
 
-**关联问题**：两个 Provider 互相引用，靠显式类型注解勉强工作
+### A-1 串行化播放器加载状态，修复“正在加载音频”卡住
 
-**根因**：`player_provider.dart:514-580` — `skipToNextProvider` 在公司数中调用 `ref.read(loadAndPlayProvider)()`（526行），而 `loadAndPlayProvider` 内部的 processing listener 回调中调用 `ref.read(skipToNextProvider)()`（580行）。
+**关联 Bug**：BUG-1
 
-**修复方案**：将 skipToNext 的逻辑内联到 `loadAndPlayProvider` 中，不单独暴露为 Provider。改为在 `loadAndPlayProvider` 内部定义 `_advanceToNext()` 私有函数：
+**根因**：播放器加载流程可重入，多个触发源并发调用 `_loadAndPlay()`。
 
-```dart
-final loadAndPlayProvider = Provider<...>((ref) {
-  // Internal helper — not a separate provider, so no cycle.
-  void _advanceToNext() {
-    final queue = ref.read(currentPlayQueueProvider);
-    final mode = ref.read(playModeProvider);
-    if (queue == null) return;
-    final nextIdx = PlayQueue.nextIndex(queue.currentIndex, queue.length, mode);
-    if (nextIdx == null) return;
-    ref.read(saveProgressProvider)();
-    final nextQueue = queue.withIndex(nextIdx);
-    ref.read(currentPlayQueueProvider.notifier).state = nextQueue;
-    // Recurse via loadAndPlay — this is safe because it's an async callback,
-    // not a synchronous Provider construction dependency.
-    ref.read(loadAndPlayProvider)();
-  }
+**修复方案**：
+- 在 `PlayerScreen` 增加加载代次/互斥机制（如 `_loadToken` 或 `CancelableOperation`），仅最后一次请求可提交 UI 状态。
+- 在 `_playNext/_playPrevious/队列切歌` 中统一改为调用 Provider 层单入口，并加“正在切换中”节流。
+- 在 `loadAndPlayProvider` 增加最小互斥（如 `AsyncMutex`/inFlight future），避免 `stop -> setAudioSource -> play` 并发执行。
 
-  return () async {
-    // ... in processing listener:  _advanceToNext();  replaces ref.read(skipToNextProvider)()
-  };
-});
-```
-
-`skipToNextProvider` 可以保留作为公开 API（供 player_screen._playNext() 调用），但改为调用内联的 `_advanceToNext`，不再通过 `loadAndPlayProvider` 走一圈。
+**需要完成的工作：**
+1. 给 `_loadAndPlay()` 增加并发保护和过期结果丢弃逻辑。
+2. 统一上下曲与队列切歌入口，避免多处直接重入。
+3. 为加载失败和超时补充显式错误态，避免永久 loading。
+4. 补充播放器切歌并发场景测试。
 
 **涉及文件**：
+- `lib/features/player/player_screen.dart`
+- `lib/features/player/player_provider.dart`
+- `test/features/player/`（新增并发场景测试）
+
+---
+
+### A-2 重构进度恢复入口，移除 5 秒自动弹窗导航竞态
+
+**关联 Bug**：BUG-2
+
+**根因**：进度弹窗关闭与播放器页面跳转由多层异步回调驱动，存在 route/context 时序竞态。
+
+**修复方案**：
+- 将 `showProgressResumeDialog(...).then(...)` 改成 `await` 顺序流程，避免 `addPostFrameCallback` 套娃。
+- 调整策略为“仅恢复当前正在播放歌曲的进度”：
+  - 启动时读取一次最近播放记录，填充 `currentPlayQueue.startPositionMs`。
+  - 点歌曲时默认直接播放，不再逐曲弹“恢复播放进度”。
+- 对“恢复播放”场景加最小兜底：进度无效时回退到 0 而非黑屏。
+
+**需要完成的工作：**
+1. 浏览器点歌流程改为 `await` 串行导航。
+2. 删除逐文件恢复弹窗触发点，保留启动恢复。
+3. 增加启动恢复与点击播放继续播放的测试覆盖。
+
+**涉及文件**：
+- `lib/features/browser/browser_screen.dart`
+- `lib/features/progress/progress_dialog.dart`
+- `lib/features/progress/progress_provider.dart`
+- `lib/features/player/player_provider.dart`
+- `test/features/progress/`
+
+---
+
+## Batch B — P1 功能异常
+
+### B-1 修复自定义定时确认按钮无响应
+
+**关联 Bug**：BUG-3
+
+**根因**：自定义定时弹窗状态管理和结构实现不稳定，确认动作与当前选值存在脱节。
+
+**修复方案**：
+- 提取独立 `StatefulWidget`（或 `ConsumerStatefulWidget`）承载小时/分钟状态，去除局部变量 + `StatefulBuilder` 组合。
+- 清理重复/损坏的 Widget 结构，保证确认按钮仅在总分钟 > 0 时可点，并稳定调用 `startDurationTimerProvider`。
+
+**需要完成的工作：**
+1. 重构自定义定时弹窗为独立组件。
+2. 修复确认按钮启用态和回调。
+3. 增加 0 分钟禁用、非 0 分钟生效测试。
+
+**涉及文件**：
+- `lib/features/timer/widgets/timer_button.dart`
+- `test/features/timer/`
+
+---
+
+### B-2 队列弹窗改为可滚动列表（全屏与迷你栏）
+
+**关联 Bug**：BUG-4
+
+**根因**：使用非滚动 `Column` 直接展开队列项。
+
+**修复方案**：
+- 队列弹窗主体改为 `DraggableScrollableSheet + ListView.builder` 或 `SizedBox + ListView.builder`。
+- 统一提取共享队列组件，避免两处重复实现偏移。
+
+**需要完成的工作：**
+1. 实现可滚动队列列表。
+2. 统一 `player_screen` 与 `mini_player_bar` 的队列弹窗实现。
+3. 验证长队列（>100）可滑动、可点选。
+
+**涉及文件**：
+- `lib/features/player/player_screen.dart`
+- `lib/features/player/widgets/mini_player_bar.dart`
+- `lib/features/player/widgets/queue_sheet.dart`
+
+---
+
+### B-3 将播放列表按钮迁移到“下一曲”右侧
+
+**关联 Bug**：播放器布局调整请求
+
+**根因**：播放列表入口仍放在 AppBar（`lib/features/player/player_screen.dart:320-329`），与交互预期不一致。
+
+**修复方案**：
+- 删除 AppBar 右上角队列按钮。
+- 在 `_PlaybackControls` 中 `next` 按钮右侧增加队列按钮并复用同一 `showQueueSheet`。
+
+**需要完成的工作：**
+1. 调整控制条布局和触控间距。
+2. 保留可访问性（tooltip/语义标签）。
+3. 更新相关 widget 测试快照/点击路径。
+
+**涉及文件**：
+- `lib/features/player/player_screen.dart`
+- `test/features/player/`
+
+---
+
+## Batch C — P2 体验与一致性
+
+### C-1 修复快进按钮图标：改为“顺时针回转箭头”语义
+
+**关联 Bug**：快进图标显示为右直线箭头
+
+**根因**：`lib/features/player/player_screen.dart:722-728` 的 `_iconForSeekForward` 默认返回 `Icons.forward`。
+
+**修复方案**：
+- 将快进统一为 `replay` 的镜像语义（优先 `Icons.replay` + 旋转/翻转，或使用更接近“快进回转”的 Material Symbol）。
+- 与快退图标形成方向相反的一致视觉体系。
+
+**需要完成的工作：**
+1. 替换快进 icon 映射逻辑。
+2. 校验 10s/30s/60s 三档一致性。
+
+**涉及文件**：
+- `lib/features/player/player_screen.dart`
+
+---
+
+### C-2 修复 60 秒步长图标走错分支
+
+**关联 Bug**：步长设置 60 秒时显示直线箭头
+
+**根因**：`_iconForSeekForward/_iconForSeekBackward` 仅处理 5/10/30，60 落入 `default`。
+
+**修复方案**：
+- 为 60 秒显式分支（如 `replay` + `60s` 文本样式），避免 default 落回错误图标。
+
+**需要完成的工作：**
+1. 增加 60 秒图标映射。
+2. 增加 seekStep=60 的 UI 测试断言。
+
+**涉及文件**：
+- `lib/features/player/player_screen.dart`
+- `test/features/player/ply_02_test.dart`
+
+---
+
+### C-3 自定义停止时长增加“上次时长”快捷项
+
+**关联 Bug**：定时设置缺少上次时长复用
+
+**根因**：当前 `TimerBottomSheet` 仅有固定 5/10/播完停止/自定义选项，未持久化上次自定义时长。
+
+**修复方案**：
+- 持久化最近一次自定义分钟数（SharedPreferences）。
+- 在弹窗顶部加入“上次时长（xx分钟）”选项，点击即设置。
+
+**需要完成的工作：**
+1. 定义 `last_custom_timer_minutes` 存储 key。
+2. 新增读取/写入 provider 与 UI 展示逻辑。
+3. 增加无历史值时隐藏该项的行为测试。
+
+**涉及文件**：
+- `lib/features/timer/timer_provider.dart`
+- `lib/features/timer/widgets/timer_button.dart`
+- `test/features/timer/`
+
+---
+
+### C-4 精简进度持久化：仅保存“当前播放歌曲”并在启动恢复
+
+**关联 Bug**：逐曲保存导致恢复弹窗泛滥与异常
+
+**根因**：当前设计按 `(connectionId, filePath)` 全量保存，多入口频繁写入与逐曲恢复查询。
+
+**修复方案**：
+- 改为单记录模型（当前播放项 + 位置 + 时长 + 时间戳）。
+- App 启动时读取单记录填充当前队列；点“播放”时续播。
+
+**需要完成的工作：**
+1. 新增/迁移 DAO 接口到“单活跃进度”模型。
+2. 调整浏览器与播放器调用链。
+3. 补充迁移兼容策略（首次升级时保留最近一条）。
+
+**涉及文件**：
+- `lib/core/database/dao/progress_dao.dart`
+- `lib/features/progress/progress_provider.dart`
+- `lib/features/browser/browser_provider.dart`
+- `lib/features/browser/browser_screen.dart`
 - `lib/features/player/player_provider.dart`
 
 ---
 
-### G-3  修复短音频（<10秒）进度保存逻辑矛盾
+## Batch I — P2 历史遗留未完成项（保留）
 
-**关联问题**：`progress_dao.dart:171` — `shouldClear(positionMs, durationMs)` 中 `positionMs > durationMs - 10000` 对于 `durationMs < 10000` 的文件恒为 true
+### I-4 版本号从 package_info_plus 读取
 
-**根因**：当 `durationMs = 5000` 时，`durationMs - 10000 = -5000`，任何 `positionMs >= 0` 都满足条件。`shouldSave` 返回 true（`positionMs >= 5000`）时 `shouldClear` 也返回 true，导致 6-9 秒的音频永远无法保存有效进度。
-
-**修复方案**：
-
-```dart
-static bool shouldClear(int positionMs, int? durationMs) {
-  if (durationMs == null) return false;
-  // Only clear when within 10 seconds of the end AND the file is long enough
-  // for the 10-second window to be meaningful.
-  if (durationMs <= 10000) return false;
-  return positionMs > durationMs - 10000;
-}
-```
+**修复方案**：将设置页关于页面版本号由硬编码改为 `PackageInfo.fromPlatform()`。
 
 **涉及文件**：
-- `lib/core/database/dao/progress_dao.dart`
+- `lib/features/settings/about_screen.dart`
+- `pubspec.yaml`
 
 ---
 
-### G-4  拦截负值/零值定时器输入
+### I-9 提取共享 _ValidationBanner 组件
 
-**关联问题**：`timer_service.dart:110` — `startDuration(-5)` 设 `endTime` 到过去，`checkExpired()` 立即返回 true
-
-**根因**：方法无输入校验。
-
-**修复方案**：
-
-```dart
-TimerState startDuration(int minutes) {
-  if (minutes <= 0) throw ArgumentError.value(minutes, 'minutes', 'must be positive');
-  final now = DateTime.now();
-  _state = TimerState(
-    mode: TimerMode.duration,
-    endTime: now.add(Duration(minutes: minutes)),
-    startedAt: now,
-  );
-  return _state!;
-}
-```
+**修复方案**：抽出连接页复用验证提示组件，消除重复代码。
 
 **涉及文件**：
-- `lib/core/services/timer_service.dart`
-
----
-
-### G-5  修复 WebDavClient.validate() 未消费 HTTP 响应体
-
-**关联问题**：`webdav_client.dart:150-173` — `streamedResponse.stream` 从未 drain
-
-**根因**：`validate()` 用 `_httpClient.send()` 获取响应后只检查 `statusCode`，不读取 body stream。HTTP 持久连接无法复用。
-
-**修复方案**：在返回前 drain 响应体：
-
-```dart
-final streamedResponse = await _httpClient.send(request);
-final statusCode = streamedResponse.statusCode;
-// Drain the response body so the HTTP connection can be reused.
-await streamedResponse.stream.drain<void>();
-```
-
-**涉及文件**：
-- `lib/core/network/webdav_client.dart`
-
----
-
-## Batch H — P1 功能隐患
-
-### H-1  ConnectionSaver.save() 三步操作增加原子性保护
-
-**关联问题**：`connection_provider.dart:172-193` — insert→secureStorage→update 三步非原子
-
-**修复方案**：在步骤2（secureStorage写入）失败时，回滚步骤1（删除已插入的DB行）。在步骤3失败时，至少记录错误日志。
-
-**涉及文件**：
-- `lib/features/connection/connection_provider.dart`
-
----
-
-### H-2  directoryCacheProvider 添加容量上限
-
-**关联问题**：`browser_provider.dart:92` — 内存缓存无界增长
-
-**修复方案**：添加 LRU 淘汰策略或最大条目数限制（如 50 个目录）。最简单的方案：在写入缓存前检查 `cache.length >= 50`，若超限则清除最旧的条目。
-
-**涉及文件**：
-- `lib/features/browser/browser_provider.dart`
-
----
-
-### H-3  替换文件级 lint 抑制为行级抑制
-
-**关联问题**：`browser_screen.dart:10` — `// ignore_for_file: use_build_context_synchronously` 覆盖整个文件
-
-**修复方案**：删除第10行的 `ignore_for_file`，在确实需要异步 context 访问的每行前添加 `// ignore: use_build_context_synchronously`。
-
-**涉及文件**：
-- `lib/features/browser/browser_screen.dart`
-
----
-
-### H-4  PlayQueue.fromMap 安全类型转换 + 边界校验
-
-**关联问题**：`play_queue.dart:180` — `as int` 在 JSON 缺字段时抛 TypeError；`nextIndex` 不校验 current 边界
-
-**修复方案**：
-- `fromMap` 中 `map['currentIndex'] as int?` 配合 `?? 0` 默认值
-- `nextIndex`/`previousIndex` 添加 `if (current < 0 || current >= length) return null;`
-- 构造函数添加 `assert(currentIndex >= 0 && currentIndex < files.length)`
-
-**涉及文件**：
-- `lib/shared/models/play_queue.dart`
-
----
-
-### H-5  _NextButton 切歌失败时显示错误反馈
-
-**关联问题**：`mini_player_bar.dart:319` — 丢弃 loadAndPlayProvider 返回值，失败时无反馈
-
-**修复方案**：添加 SnackBar（与 `_showQueueSheet` 中已有的反馈一致）：
-
-```dart
-final loaded = await ref.read(loadAndPlayProvider)();
-if (loaded == null && context.mounted) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('切换失败，请检查连接')),
-  );
-}
-```
-
-**涉及文件**：
-- `lib/features/player/widgets/mini_player_bar.dart`
-
----
-
-### H-6  自定义定时选 0:00 时禁用确认按钮
-
-**关联问题**：`timer_button.dart:190` — 0小时0分钟确认后无声关闭
-
-**修复方案**：当 `totalMinutes == 0` 时禁用确认按钮（灰色文字），或弹出时默认选中 5 分钟。
-
-**涉及文件**：
-- `lib/features/timer/widgets/timer_button.dart`
-
----
-
-### H-7  startupValidationProvider 空 id 保护
-
-**关联问题**：`connection_provider.dart:127` — `activeConn.id` 为 null 时 key 变成 `connection_password_null`
-
-**修复方案**：在拼接 key 前检查 `activeConn.id != null`：
-
-```dart
-if (activeConn.id == null) return WebDavValidationResult.authError();
-final passwordKey = 'connection_password_${activeConn.id}';
-```
-
-**涉及文件**：
-- `lib/features/connection/connection_provider.dart`
-
----
-
-### H-8  静默 catch 块添加日志
-
-**关联问题**：`browser_provider.dart:380`、`progress_dao.dart:376` 两处 `catch (_)` 完全静默
-
-**修复方案**：添加 `debugPrint('Error in restoreQueueFromPrefsProvider: $e')`。
-
-**涉及文件**：
-- `lib/features/browser/browser_provider.dart`
-- `lib/core/database/dao/progress_dao.dart`
-
----
-
-### H-9  去重 seekStep 双 Provider
-
-**关联问题**：`seekStepSettingProvider`（settings_provider）和 `seekStepProvider`（player_provider）读同一个 key
-
-**修复方案**：删除 `settings_provider.dart` 中的 `seekStepSettingProvider`，统一使用 `player_provider.dart` 中的 `seekStepProvider`。设置页改为直接 import 并 watch `seekStepProvider`。
-
-**涉及文件**：
-- `lib/features/settings/settings_provider.dart`
-- `lib/features/settings/settings_screen.dart`
-
----
-
-### H-10  修复 ConnectionEditScreen build 中的副作用
-
-**关联问题**：`connection_edit_screen.dart:108` — `_originalConfig ??= connection` 在 build 阶段执行
-
-**修复方案**：将初始化逻辑移到 `initState()`：
-
-```dart
-@override
-void initState() {
-  super.initState();
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    final config = ref.read(connectionByIdProvider(widget.connectionId)).valueOrNull;
-    if (config != null) _originalConfig = config;
-  });
-}
-```
-
-**涉及文件**：
-- `lib/features/connection/connection_edit_screen.dart`
-
----
-
-## Batch I — P2 代码质量/架构
-
-### I-1  TimerState 相等性包含 startedAt
-
-**问题**：`timer_service.dart:67-74` — `operator ==` 不比较 `startedAt`，造成同时长 timer 实例相等
-
-**修复**：在 `==` 和 `hashCode` 中加入 `startedAt`。
-
-**涉及文件**：`lib/core/services/timer_service.dart`
-
----
-
-### I-2  删除不可达的 catch 块
-
-**问题**：`connection_dao.dart:122-128` — catch 块注释说表可能不存在，但 `_onCreate` 始终创建该表
-
-**修复**：移除 try-catch，直接执行 delete。
-
-**涉及文件**：`lib/core/database/dao/connection_dao.dart`
-
----
-
-### I-3  缓存 RegExp 为 static const
-
-**问题**：`webdav_client.dart:263,298-301` — 每次方法调用重新创建 RegExp
-
-**修复**：声明为 `static final _propfindPattern = RegExp(...)` 等。
-
-**涉及文件**：`lib/core/network/webdav_client.dart`
-
----
-
-### I-4  版本号从 package_info_plus 读取
-
-**问题**：`about_screen.dart:9` — 版本号硬编码 `1.0.0`
-
-**修复**：添加 `package_info_plus` 依赖，用 `PackageInfo.fromPlatform()` 读取。
-
-**涉及文件**：`lib/features/settings/about_screen.dart`、`pubspec.yaml`
-
----
-
-### I-5  TextPainter 添加 dispose()
-
-**问题**：`breadcrumb_bar.dart:57-59` — TextPainter 创建后未释放
-
-**修复**：在 `LayoutBuilder` 回调结束前调用 `textPainter.dispose()`。
-
-**涉及文件**：`lib/features/browser/widgets/breadcrumb_bar.dart`
-
----
-
-### I-6  错误消息中过滤 URL 敏感信息
-
-**问题**：`webdav_client.dart:242` — `'无法连接到服务器：$e'` 可能泄露 URL
-
-**修复**：使用 `e is SocketException` 类型判断，输出不包含原始 URL 的通用消息。
-
-**涉及文件**：`lib/core/network/webdav_client.dart`
-
----
-
-### I-7  _sourceMatchesQueue 使用精确路径比对
-
-**问题**：`player_screen.dart:130` — `.contains()` 子串匹配 `/song.mp3` 会误匹配 `/folder/song.mp3`
-
-**修复**：改用 `source.uri.path.endsWith(queue.current.path)` 或比较解码后的完整路径：
-
-```dart
-final decodedPath = Uri.decodeComponent(source.uri.path);
-return decodedPath.endsWith(queue.current.path);
-```
-
-**涉及文件**：`lib/features/player/player_screen.dart`
-
----
-
-### I-8  进度弹窗 dismiss 时给予反馈
-
-**问题**：`browser_screen.dart:179-226` — 弹窗被 dismiss（null 返回）时无反应
-
-**修复方案**：无需修改——dismiss 表示用户主动取消，保持当前选择是合理的默认行为。可选项：选中当前文件高亮但无需额外反馈。
-
-**涉及文件**：无代码修改（WONTFIX，标记为设计决策）
-
----
-
-### I-9  提取共享 _ValidationBanner 组件
-
-**问题**：`connection_screen.dart:217-288` 和 `connection_edit_screen.dart:303-375` 含几乎相同的 `_ValidationBanner`/`_Banner` 代码
-
-**修复**：提取到 `lib/features/connection/widgets/validation_banner.dart`。
-
-**涉及文件**：
-- `lib/features/connection/widgets/validation_banner.dart`（新建）
+- `lib/features/connection/widgets/validation_banner.dart`
 - `lib/features/connection/connection_screen.dart`
 - `lib/features/connection/connection_edit_screen.dart`
 
 ---
 
-### I-10  提取共享队列列表组件
+### I-10 提取共享队列列表组件
 
-**问题**：`player_screen.dart` 和 `mini_player_bar.dart` 中队列 sheet 逻辑重复
-
-**修复**：提取到 `lib/features/player/widgets/queue_sheet.dart` 作为独立 Widget。
+**修复方案**：抽出 `queue_sheet.dart`，供全屏播放器与迷你栏复用。
 
 **涉及文件**：
-- `lib/features/player/widgets/queue_sheet.dart`（新建）
+- `lib/features/player/widgets/queue_sheet.dart`
 - `lib/features/player/player_screen.dart`
 - `lib/features/player/widgets/mini_player_bar.dart`
 
 ---
 
-### I-11  修复通知渠道包名
+### I-12 添加 GoRouter 路由守卫
 
-**问题**：`main.dart:44` — `com.example.nas_audio_player.channel` 是占位符
+**修复方案**：无连接时禁止进入 `/browser`、`/player`；无队列时禁止进入 `/player`。
 
-**修复**：改为与实际 `build.gradle` 中 `applicationId` 一致的包名，或从 AndroidManifest 动态读取。
-
-**涉及文件**：`lib/main.dart`
-
----
-
-### I-12  添加 GoRouter 路由守卫
-
-**问题**：`main.dart:71-118` — 无 `redirect` 逻辑，可 deep-link 到不可用路由
-
-**修复**：添加 `redirect` 守卫——当无活跃连接时 `/browser` 和 `/player` 重定向到 `/onboarding`，当无队列时 `/player` 重定向到 `/browser`。
-
-**涉及文件**：`lib/main.dart`
+**涉及文件**：
+- `lib/main.dart`
 
 ---
 
 ## 实施顺序建议
 
-```
-第 1 步: G-1 (AudioHandler 泄漏)      ← 最影响稳定性的修复
-第 2 步: G-2 (Provider 循环依赖)      ← 架构风险
-第 3 步: G-3 (短音频进度)             ← 逻辑缺陷
-第 4 步: G-4 (负值定时器)             ← 逻辑缺陷
-第 5 步: G-5 (HTTP 连接泄漏)          ← 资源泄漏
-
-第 6~10 步: H-1 ~ H-10               ← 全部独立，可并行
-第 11~22 步: I-1 ~ I-12              ← 全部独立，I-8 标为 WONTFIX
-```
-
-说明：
-- G 批次全部独立，但 G-1 和 G-2 建议最先做
-- H 批次全部独立，互不依赖
-- I 批次为代码质量改进，全部独立
+1. `A-1` → `A-2`
+说明：先稳定播放器加载链路，再处理进度恢复链路，避免交叉竞态。
+2. `B-1` → `B-2` → `B-3`
+说明：先修复无响应，再修复队列可滚动与入口位置。
+3. `C-1` + `C-2` + `C-3`
+说明：均为低风险 UI/交互一致性，可并行。
+4. `C-4`
+说明：涉及数据模型调整，需单独评审与迁移验证。
+5. `I-4`、`I-9`、`I-10`、`I-12`
+说明：历史遗留优化项，独立排期。
