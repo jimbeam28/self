@@ -156,7 +156,7 @@
             "lib/features/timer/widgets/timer_button.dart",
             "test/features/timer/"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": ["B-1"]
         },
         "C-4": {

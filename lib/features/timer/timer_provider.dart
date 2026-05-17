@@ -18,6 +18,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../browser/browser_provider.dart';
 import '../../core/services/timer_service.dart';
 
 // ── Service instance ──────────────────────────────────────────────────────────
@@ -56,6 +57,30 @@ final timerActiveProvider = Provider<bool>((ref) {
 final timerModeProvider = Provider<TimerMode?>((ref) {
   final state = ref.watch(timerStateProvider);
   return state?.mode;
+});
+
+// ── Last custom duration (C-3) ───────────────────────────────────────────────
+
+const lastCustomTimerMinutesKey = 'last_custom_timer_minutes';
+
+int? readLastCustomTimerMinutes(dynamic prefs) {
+  if (prefs == null) return null;
+  final value = prefs.getInt(lastCustomTimerMinutesKey);
+  if (value == null || value <= 0) return null;
+  return value;
+}
+
+final lastCustomTimerMinutesProvider = Provider<int?>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return readLastCustomTimerMinutes(prefs);
+});
+
+final setLastCustomTimerMinutesProvider = Provider<void Function(int)>((ref) {
+  return (int minutes) {
+    if (minutes <= 0) return;
+    ref.read(sharedPreferencesProvider)?.setInt(lastCustomTimerMinutesKey, minutes);
+    ref.invalidate(lastCustomTimerMinutesProvider);
+  };
 });
 
 // ── Remaining time stream (TMR-03) ────────────────────────────────────────────

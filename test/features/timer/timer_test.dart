@@ -22,8 +22,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nas_audio_player/core/services/timer_service.dart';
+import 'package:nas_audio_player/features/browser/browser_provider.dart';
 import 'package:nas_audio_player/features/timer/timer_provider.dart';
 import 'package:nas_audio_player/features/timer/widgets/timer_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Helpers
@@ -44,6 +46,23 @@ Widget wrapWithTimerProviders(Widget child) {
   return ProviderScope(
     overrides: [
       timerServiceProvider.overrideWith((ref) => TimerService()),
+      sharedPreferencesProvider.overrideWith((ref) => null),
+      ..._noopRemainingTimeOverride(),
+    ],
+    child: MaterialApp(
+      home: Scaffold(body: child),
+    ),
+  );
+}
+
+Widget wrapWithTimerProvidersAndPrefs(
+  Widget child, {
+  SharedPreferences? prefs,
+}) {
+  return ProviderScope(
+    overrides: [
+      timerServiceProvider.overrideWith((ref) => TimerService()),
+      sharedPreferencesProvider.overrideWith((ref) => prefs),
       ..._noopRemainingTimeOverride(),
     ],
     child: MaterialApp(
@@ -536,6 +555,11 @@ void main() {
       final formatted = container.read(formattedRemainingProvider);
       expect(formatted, isNull);
     });
+
+    test('lastCustomTimerMinutesProvider returns null without saved value', () {
+      final container = createTimerTestContainer();
+      expect(container.read(lastCustomTimerMinutesProvider), isNull);
+    });
   });
 
   // ═════════════════════════════════════════════════════════════════════════
@@ -699,6 +723,63 @@ void main() {
       expect(state, isNotNull);
       expect(state!.mode, equals(TimerMode.duration));
       expect(state.endTime, isNotNull);
+    });
+
+    testWidgets('无上次自定义时长时隐藏快捷项', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(
+        wrapWithTimerProvidersAndPrefs(const TimerButton(), prefs: prefs),
+      );
+
+      await tester.tap(find.byType(IconButton));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('上次时长'), findsNothing);
+    });
+
+    testWidgets('有上次自定义时长时显示快捷项并可直接启用', (tester) async {
+      SharedPreferences.setMockInitialValues({
+        lastCustomTimerMinutesKey: 75,
+      });
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(
+        wrapWithTimerProvidersAndPrefs(const TimerButton(), prefs: prefs),
+      );
+
+      await tester.tap(find.byType(IconButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('上次时长（1小时15分钟）'), findsOneWidget);
+      await tester.tap(find.text('上次时长（1小时15分钟）'));
+      await tester.pumpAndSettle();
+
+      final iconButton = tester.widget<IconButton>(find.byType(IconButton));
+      expect(iconButton.tooltip, isNotNull);
+    });
+
+    testWidgets('确认自定义时长后保存为上次时长', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(
+        wrapWithTimerProvidersAndPrefs(const TimerButton(), prefs: prefs),
+      );
+
+      await tester.tap(find.byType(IconButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('自定义'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('确认'));
+      await tester.pumpAndSettle();
+
+      expect(
+        prefs.getInt(lastCustomTimerMinutesKey),
+        equals(5),
+        reason: '确认自定义时长后应持久化最近一次自定义分钟数',
+      );
     });
   });
 }

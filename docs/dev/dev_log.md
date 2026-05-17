@@ -1,5 +1,25 @@
 ---
 
+## [2026-05-17 18:06] C-3 - 自定义停止时长增加“上次时长”快捷项
+
+**优先级**: P2
+**关联问题**: 缺少历史时长复用
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/timer/timer_provider.dart` — 新增 `last_custom_timer_minutes` 持久化 key 及读取/写入 provider
+- `lib/features/timer/widgets/timer_button.dart` — 在定时菜单顶部增加“上次时长”快捷项，并在确认自定义时长后持久化最近一次分钟数
+- `test/features/timer/timer_test.dart` — 补充无历史值隐藏、存在历史值显示并可直接启用、确认自定义后写回历史值的测试
+
+### 验证结果
+- 通过: 3 / 总计: 3（work_items 检查项）
+- `flutter test test/features/timer/timer_test.dart test/features/progress/prg_test.dart`：通过
+- `flutter analyze`：0 issues
+- `flutter test`：全量通过
+
+### 备注
+- “上次时长”只记录自定义时长，不会被固定 5/10 分钟选项覆盖；展示文案会按分钟数自动格式化为小时/分钟组合。
+
 ## [2026-05-17 17:51] C-2 - 修复 60 秒步长图标走错分支
 
 **优先级**: P2

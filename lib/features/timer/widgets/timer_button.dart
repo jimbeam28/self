@@ -76,6 +76,8 @@ class TimerBottomSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final lastCustomMinutes = ref.watch(lastCustomTimerMinutesProvider);
+
     return SafeArea(
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -96,6 +98,15 @@ class TimerBottomSheet extends ConsumerWidget {
                 ),
               ),
               const Divider(height: 1),
+              if (lastCustomMinutes != null)
+                _TimerOptionTile(
+                  icon: Icons.history,
+                  label: '上次时长（${_formatMinutesLabel(lastCustomMinutes)}）',
+                  onTap: () {
+                    ref.read(startDurationTimerProvider)(lastCustomMinutes);
+                    Navigator.of(context).pop();
+                  },
+                ),
               _TimerOptionTile(
                 icon: Icons.timer,
                 label: '5 分钟',
@@ -218,6 +229,9 @@ class _CustomTimerPickerSheetState
                   onPressed: _totalMinutes == 0
                       ? null
                       : () {
+                          ref.read(setLastCustomTimerMinutesProvider)(
+                            _totalMinutes,
+                          );
                           ref.read(startDurationTimerProvider)(_totalMinutes);
                           Navigator.pop(context);
                         },
@@ -305,6 +319,14 @@ class _CustomTimerPickerSheetState
       ),
     );
   }
+}
+
+String _formatMinutesLabel(int minutes) {
+  final hours = minutes ~/ 60;
+  final remainingMinutes = minutes % 60;
+  if (hours == 0) return '$remainingMinutes分钟';
+  if (remainingMinutes == 0) return '$hours小时';
+  return '$hours小时$remainingMinutes分钟';
 }
 
 /// A single option tile in the timer bottom sheet.
