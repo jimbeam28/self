@@ -1,5 +1,30 @@
 ---
 
+## [2026-05-17 17:04] A-2 - 重构进度恢复入口，移除 5 秒自动弹窗导航竞态
+
+**优先级**: P0
+**关联问题**: BUG-2
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/browser/browser_screen.dart` — 点歌改为直接设置队列并顺序导航，不再逐曲弹恢复对话框
+- `lib/features/progress/progress_provider.dart` — 新增最近一次播放进度 provider，供启动恢复使用
+- `lib/features/player/player_provider.dart` — 新增启动恢复与进度兜底逻辑，仅在当前队列当前曲目匹配时应用最近进度
+- `lib/main.dart` — 启动阶段改为触发“恢复队列 + 恢复当前曲目进度”
+- `test/features/player/ply_05_test.dart` — 补充启动恢复纯逻辑测试
+- `test/features/progress/prg_test.dart` — 补充最近播放记录 provider 测试
+
+### 验证结果
+- 通过: 3 / 总计: 3（work_items 检查项）
+- `flutter analyze`：0 issues
+- `flutter test test/features/player/ply_05_test.dart test/features/progress/prg_test.dart`：通过
+- `flutter test`：全量通过
+
+### 备注
+- 启动恢复只会把“最近一次播放记录”补到当前已恢复队列的当前曲目上；若进度越界或损坏，会回退到 `0` 避免黑屏或 seek 异常。
+
+---
+
 ## [2026-05-17 16:53] A-1 - 串行化播放器加载状态，修复‘正在加载音频’卡住
 
 **优先级**: P0

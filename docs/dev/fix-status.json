@@ -41,7 +41,7 @@
             "lib/features/player/player_provider.dart",
             "test/features/progress/"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": ["A-1"]
         }
       }

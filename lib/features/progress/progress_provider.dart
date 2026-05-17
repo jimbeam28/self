@@ -42,17 +42,26 @@ final recentlyPlayedProvider =
   return dao.getRecentlyPlayed(limit: limit ?? 20);
 });
 
+/// Returns the most recently played progress record, or `null` when none
+/// exists. Used during app startup to restore the current track's position.
+final latestPlayedProgressProvider = FutureProvider<PlayProgress?>((ref) async {
+  final records = await ref.watch(recentlyPlayedProvider(1).future);
+  if (records.isEmpty) return null;
+  return records.first;
+});
+
 /// Action provider: upserts (or clears) playback progress.
 ///
 /// Handles PRG-T03 (skip if < 5 s) and PRG-T04 (clear if near end)
 /// via [ProgressDao.upsert].  Callers pass the raw playback state and
 /// the DAO handles the business rules.
-final upsertProgressProvider = Provider<void Function({
-  required int connectionId,
-  required String filePath,
-  required int positionMs,
-  int? durationMs,
-})>((ref) {
+final upsertProgressProvider = Provider<
+    void Function({
+      required int connectionId,
+      required String filePath,
+      required int positionMs,
+      int? durationMs,
+    })>((ref) {
   return ({
     required int connectionId,
     required String filePath,
@@ -76,10 +85,11 @@ final upsertProgressProvider = Provider<void Function({
 });
 
 /// Action provider: deletes a single progress record (PRG-T26, PRG-T28).
-final clearProgressProvider = Provider<void Function({
-  required int connectionId,
-  required String filePath,
-})>((ref) {
+final clearProgressProvider = Provider<
+    void Function({
+      required int connectionId,
+      required String filePath,
+    })>((ref) {
   return ({
     required int connectionId,
     required String filePath,

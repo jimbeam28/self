@@ -21,7 +21,6 @@ import '../../shared/models/nas_file.dart';
 import '../../shared/models/play_queue.dart';
 import '../connection/connection_provider.dart';
 import '../player/widgets/mini_player_bar.dart';
-import '../progress/progress_dialog.dart';
 import '../progress/progress_provider.dart';
 import 'browser_provider.dart';
 import 'widgets/breadcrumb_bar.dart';
@@ -119,9 +118,8 @@ class BrowserScreen extends ConsumerWidget {
               child: contentsAsync.when(
                 loading: () => const _LoadingView(),
                 error: (error, _) => _ErrorView(
-                  message: error is WebDavException
-                      ? error.message
-                      : '加载失败：$error',
+                  message:
+                      error is WebDavException ? error.message : '加载失败：$error',
                   onRetry: () {
                     ref.invalidate(directoryContentsProvider(currentPath));
                   },
@@ -146,157 +144,95 @@ class BrowserScreen extends ConsumerWidget {
                             .push(dirPath);
                       },
                       onFileTap: (tappedFile) async {
-                      // BRW-04: Build play queue from current directory.
-                      // Re-read the cached contents so we have the full
-                      // filtered/sorted list (the UI may show a subset).
-                      final contents = ref
-                          .read(directoryContentsProvider(currentPath))
-                          .valueOrNull;
-                      if (contents == null) return;
+                        // BRW-04: Build play queue from current directory.
+                        // Re-read the cached contents so we have the full
+                        // filtered/sorted list (the UI may show a subset).
+                        final contents = ref
+                            .read(directoryContentsProvider(currentPath))
+                            .valueOrNull;
+                        if (contents == null) return;
 
-                      final audioFiles =
-                          contents.where((f) => !f.isDirectory).toList();
-                      final startIndex = audioFiles
-                          .indexWhere((f) => f.path == tappedFile.path);
-                      if (startIndex < 0) return;
+                        final audioFiles =
+                            contents.where((f) => !f.isDirectory).toList();
+                        final startIndex = audioFiles
+                            .indexWhere((f) => f.path == tappedFile.path);
+                        if (startIndex < 0) return;
 
-                      // B-4: await progress loading to avoid race window.
-                      await ref.read(
-                          loadProgressForDirectoryProvider(currentPath).future);
+                        // Lazily resolve GoRouter — only needed when the user
+                        // actually taps a file.
+                        final goRouter = GoRouter.of(context);
 
-                      // Check for saved playback progress
-                      final progress =
-                          ref.read(playProgressProvider(tappedFile.path));
-
-                      // Lazily resolve GoRouter — only needed when the user
-                      // actually taps a file.
-                      final goRouter = GoRouter.of(context);
-
-                      if (progress != null) {
-                        // PRG-03: Show resume dialog with countdown timer.
-                        // Dialog returns true=continue, false=start over,
-                        // null=dismissed.
-                        final container =
-                            ProviderScope.containerOf(context);
-                        // ignore: discarded_futures
-                        showProgressResumeDialog(
-                          context,
-                          container,
-                          progress,
-                        ).then((continuePlayback) {
-                          if (!context.mounted) return;
-                          if (continuePlayback == true) {
-                            // Resume from saved position
-                            final queue = PlayQueue(
-                              files: audioFiles,
-                              currentIndex: startIndex,
-                              startPositionMs: progress.positionMs,
-                            );
-                            ref
-                                .read(currentPlayQueueProvider.notifier)
-                                .state = queue;
-                            // E-2: record which connection this queue was built with.
-                            final connId = ref
-                                .read(activeConnectionProvider).valueOrNull?.id;
-                            ref.read(lastQueueConnectionIdProvider.notifier).state = connId;
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (context.mounted) goRouter.push('/player');
-                            });
-                          } else {
-                            // Start from beginning (or dialog dismissed)
-                            // PRG-T20: also delete progress on start-over
-                            if (continuePlayback == false) {
-                              ref.read(clearProgressProvider)(
-                                connectionId: progress.connectionId,
-                                filePath: progress.filePath,
-                              );
-                            }
-                            final queue = PlayQueue(
-                              files: audioFiles,
-                              currentIndex: startIndex,
-                            );
-                            ref
-                                .read(currentPlayQueueProvider.notifier)
-                                .state = queue;
-                            // E-2: record which connection this queue was built with.
-                            final connId2 = ref
-                                .read(activeConnectionProvider).valueOrNull?.id;
-                            ref.read(lastQueueConnectionIdProvider.notifier).state = connId2;
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (context.mounted) goRouter.push('/player');
-                            });
-                          }
-                        });
-                      } else {
-                        // No saved progress — play from beginning.
                         final queue = PlayQueue(
                           files: audioFiles,
                           currentIndex: startIndex,
                         );
-                        ref
-                            .read(currentPlayQueueProvider.notifier)
-                            .state = queue;
+                        ref.read(currentPlayQueueProvider.notifier).state =
+                            queue;
                         // E-2: record which connection this queue was built with.
-                        final connId3 = ref
-                            .read(activeConnectionProvider).valueOrNull?.id;
-                        ref.read(lastQueueConnectionIdProvider.notifier).state = connId3;
-                        goRouter.push('/player');
-                      }
-                    },
-                    onFileLongPress: (tappedFile) {
-                      final progress =
-                          ref.read(playProgressProvider(tappedFile.path));
-                      if (progress == null) return;
+                        final connId =
+                            ref.read(activeConnectionProvider).valueOrNull?.id;
+                        ref.read(lastQueueConnectionIdProvider.notifier).state =
+                            connId;
+                        await goRouter.push('/player');
+                      },
+                      onFileLongPress: (tappedFile) {
+                        final progress =
+                            ref.read(playProgressProvider(tappedFile.path));
+                        if (progress == null) return;
 
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (ctx) {
-                          return SafeArea(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Text(
-                                    tappedFile.name,
-                                    style: Theme.of(context).textTheme.titleMedium,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                        showModalBottomSheet(
+                          context: context,
+                          builder: (ctx) {
+                            return SafeArea(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Text(
+                                      tappedFile.name,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
-                                const Divider(height: 1),
-                                ListTile(
-                                  leading: const Icon(Icons.delete_outline,
-                                      color: Colors.red),
-                                  title: const Text('清除播放进度'),
-                                  subtitle: Text(
-                                    '已保存进度 ${progress.formattedPosition}',
-                                    style: Theme.of(context).textTheme.bodySmall,
+                                  const Divider(height: 1),
+                                  ListTile(
+                                    leading: const Icon(Icons.delete_outline,
+                                        color: Colors.red),
+                                    title: const Text('清除播放进度'),
+                                    subtitle: Text(
+                                      '已保存进度 ${progress.formattedPosition}',
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                    onTap: () {
+                                      ref.read(clearProgressProvider)(
+                                        connectionId: progress.connectionId,
+                                        filePath: progress.filePath,
+                                      );
+                                      Navigator.of(ctx).pop();
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text('播放进度已清除'),
+                                        ),
+                                      );
+                                    },
                                   ),
-                                  onTap: () {
-                                    ref.read(clearProgressProvider)(
-                                      connectionId: progress.connectionId,
-                                      filePath: progress.filePath,
-                                    );
-                                    Navigator.of(ctx).pop();
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('播放进度已清除'),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                const SizedBox(height: 8),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
+                                  const SizedBox(height: 8),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
             // Mini player bar (PLY-08) — shown when audio is loaded/playing
             const MiniPlayerBar(),
@@ -455,7 +391,8 @@ class _FileList extends StatelessWidget {
             // ignore: discarded_futures
             onFileTap(file);
           },
-          onLongPress: onFileLongPress != null ? () => onFileLongPress!(file) : null,
+          onLongPress:
+              onFileLongPress != null ? () => onFileLongPress!(file) : null,
         );
       },
     );
@@ -478,7 +415,8 @@ class _SortMenuItem extends StatelessWidget {
         if (selected)
           Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: Icon(Icons.check, size: 18, color: Theme.of(context).colorScheme.primary),
+            child: Icon(Icons.check,
+                size: 18, color: Theme.of(context).colorScheme.primary),
           )
         else
           const SizedBox(width: 26),

@@ -200,8 +200,9 @@ class _OnboardingPage extends ConsumerWidget {
                 );
               }
               // CON-T15: validation succeeded (or no active connection) — go to browser
-              // B-3: restore persisted play queue.
-              ref.read(restoreQueueFromPrefsProvider);
+              // A-2: restore persisted queue, then patch in the latest
+              // saved playback position for the current track.
+              ref.read(restoreStartupProgressProvider);
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 context.go('/browser');
               });
@@ -225,7 +226,8 @@ class _OnboardingPage extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.storage_outlined, size: 80, color: Colors.deepPurple),
+                const Icon(Icons.storage_outlined,
+                    size: 80, color: Colors.deepPurple),
                 const SizedBox(height: 24),
                 Text(
                   '添加第一个 NAS 连接',

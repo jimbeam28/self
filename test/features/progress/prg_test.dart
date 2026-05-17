@@ -142,8 +142,7 @@ void main() {
 
       // Verify record exists in DB
       final saved = await dao.find(1, '/music/song.mp3');
-      expect(saved, isNotNull,
-          reason: '数据库应存在该文件进度记录');
+      expect(saved, isNotNull, reason: '数据库应存在该文件进度记录');
       expect(saved!.positionMs, equals(45000));
       expect(saved.durationMs, equals(240000));
       expect(saved.connectionId, equals(1));
@@ -151,8 +150,7 @@ void main() {
 
       // Only one record
       final count = await dao.count();
-      expect(count, equals(1),
-          reason: '新文件只有一条记录');
+      expect(count, equals(1), reason: '新文件只有一条记录');
     });
 
     // ── PRG-T02: Same file second save (UPSERT) ────────────────────────────
@@ -177,8 +175,7 @@ void main() {
 
       // Verify: only ONE record (UPSERT, not duplicate)
       final count = await dao.count();
-      expect(count, equals(1),
-          reason: '同一(connectionId, filePath)应只有一条记录，非新增');
+      expect(count, equals(1), reason: '同一(connectionId, filePath)应只有一条记录，非新增');
 
       // Position updated to the later value
       final saved = await dao.find(1, '/music/song.mp3');
@@ -197,17 +194,14 @@ void main() {
         durationMs: 120000,
       );
 
-      expect(result, isFalse,
-          reason: '位置 < 5 秒时 upsert 应返回 false（skip）');
+      expect(result, isFalse, reason: '位置 < 5 秒时 upsert 应返回 false（skip）');
 
       // Verify no record was created
       final saved = await dao.find(1, '/music/song.mp3');
-      expect(saved, isNull,
-          reason: '位置 < 5 秒不应写入数据库');
+      expect(saved, isNull, reason: '位置 < 5 秒不应写入数据库');
 
       final count = await dao.count();
-      expect(count, equals(0),
-          reason: '不应有任何记录');
+      expect(count, equals(0), reason: '不应有任何记录');
     });
 
     // ── PRG-T04: Position > duration - 10s → record cleared ────────────────
@@ -229,17 +223,14 @@ void main() {
         durationMs: 120000,
       );
 
-      expect(result, isNull,
-          reason: '位置 > 总时长 - 10s 时应返回 null（记录被清除）');
+      expect(result, isNull, reason: '位置 > 总时长 - 10s 时应返回 null（记录被清除）');
 
       // Verify record was deleted
       final saved = await dao.find(1, '/music/song.mp3');
-      expect(saved, isNull,
-          reason: '播完的文件进度记录应被删除');
+      expect(saved, isNull, reason: '播完的文件进度记录应被删除');
 
       final count = await dao.count();
-      expect(count, equals(0),
-          reason: '表中不应有记录');
+      expect(count, equals(0), reason: '表中不应有记录');
     });
 
     // ── PRG-T05: Position == 5s → should save (boundary) ───────────────────
@@ -252,12 +243,10 @@ void main() {
         durationMs: 120000,
       );
 
-      expect(result, isTrue,
-          reason: '位置恰好 5 秒时应保存（>=5s 即保存）');
+      expect(result, isTrue, reason: '位置恰好 5 秒时应保存（>=5s 即保存）');
 
       final saved = await dao.find(1, '/music/song.mp3');
-      expect(saved, isNotNull,
-          reason: '数据库应有记录');
+      expect(saved, isNotNull, reason: '数据库应有记录');
       expect(saved!.positionMs, equals(5000));
     });
 
@@ -281,13 +270,11 @@ void main() {
         durationMs: 120000,
       );
 
-      expect(result, isTrue,
-          reason: '位置==总时长-10s 时应保存（> 才清除，= 不清除）');
+      expect(result, isTrue, reason: '位置==总时长-10s 时应保存（> 才清除，= 不清除）');
 
       // Verify record still exists with updated position
       final saved = await dao.find(1, '/music/song.mp3');
-      expect(saved, isNotNull,
-          reason: '记录应仍存在');
+      expect(saved, isNotNull, reason: '记录应仍存在');
       expect(saved!.positionMs, equals(110000));
     });
 
@@ -304,8 +291,7 @@ void main() {
 
       expect(result, isTrue);
       final saved = await dao.find(1, '/music/song.mp3');
-      expect(saved!.positionMs, equals(67300),
-          reason: '暂停时应保存当前播放位置');
+      expect(saved!.positionMs, equals(67300), reason: '暂停时应保存当前播放位置');
     });
 
     // ── PRG-T08: Track switch → save previous track ────────────────────────
@@ -328,8 +314,7 @@ void main() {
       );
 
       final savedA = await dao.find(1, '/music/track_a.mp3');
-      expect(savedA!.positionMs, equals(80000),
-          reason: '切换曲目时应保存上一首的最终进度');
+      expect(savedA!.positionMs, equals(80000), reason: '切换曲目时应保存上一首的最终进度');
 
       // Start playing track B
       await dao.upsert(
@@ -340,13 +325,11 @@ void main() {
       );
 
       final savedB = await dao.find(1, '/music/track_b.mp3');
-      expect(savedB, isNotNull,
-          reason: '新曲目的进度应正常保存');
+      expect(savedB, isNotNull, reason: '新曲目的进度应正常保存');
 
       // Both tracks have independent records
       final count = await dao.count();
-      expect(count, equals(2),
-          reason: '两首曲目各有独立记录');
+      expect(count, equals(2), reason: '两首曲目各有独立记录');
     });
 
     // ── PRG-T09: App background → save ─────────────────────────────────────
@@ -360,12 +343,10 @@ void main() {
         durationMs: 14400000, // 4 hour book
       );
 
-      expect(result, isTrue,
-          reason: '应用进入后台时应保存当前进度');
+      expect(result, isTrue, reason: '应用进入后台时应保存当前进度');
 
       final saved = await dao.find(1, '/music/audiobook.m4b');
-      expect(saved!.positionMs, equals(3600000),
-          reason: '后台保存的进度应准确');
+      expect(saved!.positionMs, equals(3600000), reason: '后台保存的进度应准确');
     });
 
     // ── PRG-T10: App close (detached) → save ───────────────────────────────
@@ -379,12 +360,10 @@ void main() {
         durationMs: 1800000,
       );
 
-      expect(result, isTrue,
-          reason: '应用关闭时应保存当前进度');
+      expect(result, isTrue, reason: '应用关闭时应保存当前进度');
 
       final saved = await dao.find(1, '/music/podcast.mp3');
-      expect(saved, isNotNull,
-          reason: '关闭时的进度不应丢失');
+      expect(saved, isNotNull, reason: '关闭时的进度不应丢失');
       expect(saved!.positionMs, equals(1234000));
     });
   });
@@ -421,8 +400,7 @@ void main() {
       );
 
       final result = await dao.find(1, '/music/song.mp3');
-      expect(result, isNotNull,
-          reason: '有进度记录的文件应返回 PlayProgress');
+      expect(result, isNotNull, reason: '有进度记录的文件应返回 PlayProgress');
       expect(result!.positionMs, equals(75400),
           reason: '查询到的 position 应与保存值一致');
       expect(result.durationMs, equals(200000));
@@ -435,8 +413,7 @@ void main() {
     test('PRG-T12: find returns null for file with no saved progress',
         () async {
       final result = await dao.find(1, '/music/never_played.mp3');
-      expect(result, isNull,
-          reason: '无进度记录的文件应返回 null');
+      expect(result, isNull, reason: '无进度记录的文件应返回 null');
     });
 
     // ── PRG-T13: Different connectionId, same path → independent ───────────
@@ -467,23 +444,19 @@ void main() {
       // Query connection 2
       final conn2Progress = await dao.find(2, '/shared/music.mp3');
       expect(conn2Progress, isNotNull);
-      expect(conn2Progress!.positionMs, equals(90000),
-          reason: '连接 2 的进度应独立记录');
+      expect(conn2Progress!.positionMs, equals(90000), reason: '连接 2 的进度应独立记录');
 
       // Two records total
       final count = await dao.count();
-      expect(count, equals(2),
-          reason: '不同连接的同路径文件应有两条独立记录');
+      expect(count, equals(2), reason: '不同连接的同路径文件应有两条独立记录');
     });
 
     // ── PRG-T14: percentage with valid duration ────────────────────────────
 
-    test('PRG-T14: percentage is 0.25 when position=30s, duration=120s',
-        () {
+    test('PRG-T14: percentage is 0.25 when position=30s, duration=120s', () {
       // positionMs = 30000, durationMs = 120000
       final progress = _progress(positionMs: 30000, durationMs: 120000);
-      expect(progress.percentage, equals(0.25),
-          reason: '30/120 = 0.25');
+      expect(progress.percentage, equals(0.25), reason: '30/120 = 0.25');
     });
 
     // ── PRG-T15: percentage when duration is null → 0 ──────────────────────
@@ -515,13 +488,14 @@ void main() {
 
       // Get recently played with default limit (20)
       final all = await dao.getRecentlyPlayed();
-      expect(all.length, equals(5),
-          reason: '应返回全部 5 条记录');
+      expect(all.length, equals(5), reason: '应返回全部 5 条记录');
 
       // Ordered by last_played_at DESC (most recent first)
       for (int i = 1; i < all.length; i++) {
         expect(
-          all[i].lastPlayedAt.millisecondsSinceEpoch
+          all[i]
+              .lastPlayedAt
+              .millisecondsSinceEpoch
               .compareTo(all[i - 1].lastPlayedAt.millisecondsSinceEpoch),
           lessThanOrEqualTo(0),
           reason: '应按 last_played_at 降序排列',
@@ -532,10 +506,54 @@ void main() {
 
       // Test limit
       final limited = await dao.getRecentlyPlayed(limit: 3);
-      expect(limited.length, equals(3),
-          reason: '应只返回 limit 条记录');
+      expect(limited.length, equals(3), reason: '应只返回 limit 条记录');
       expect(limited.first.filePath, equals('/music/track_5.mp3'));
       expect(limited.last.filePath, equals('/music/track_3.mp3'));
+    });
+
+    test('latestPlayedProgressProvider returns the most recent record',
+        () async {
+      await dao.rawInsert(
+        _progress(
+          connectionId: 1,
+          filePath: '/music/older.mp3',
+          positionMs: 10000,
+          lastPlayedAt: DateTime(2026, 5, 17, 9, 0),
+        ),
+      );
+      await dao.rawInsert(
+        _progress(
+          connectionId: 1,
+          filePath: '/music/latest.mp3',
+          positionMs: 55000,
+          lastPlayedAt: DateTime(2026, 5, 17, 10, 0),
+        ),
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          progressDaoProvider.overrideWithValue(dao),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final latest = await container.read(latestPlayedProgressProvider.future);
+      expect(latest, isNotNull);
+      expect(latest!.filePath, equals('/music/latest.mp3'));
+      expect(latest.positionMs, equals(55000));
+    });
+
+    test('latestPlayedProgressProvider returns null when history is empty',
+        () async {
+      final container = ProviderContainer(
+        overrides: [
+          progressDaoProvider.overrideWithValue(dao),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final latest = await container.read(latestPlayedProgressProvider.future);
+      expect(latest, isNull);
     });
   });
 
@@ -580,20 +598,17 @@ void main() {
       await tester.pumpAndSettle();
 
       // Dialog title
-      expect(find.text('恢复播放进度'), findsOneWidget,
-          reason: '应显示对话框标题');
+      expect(find.text('恢复播放进度'), findsOneWidget, reason: '应显示对话框标题');
 
       // Position formatted: 1:23:45
       expect(find.textContaining('1:23:45'), findsOneWidget,
           reason: '对话框应显示保存的进度时间 HH:MM:SS');
 
       // Question text
-      expect(find.text('是否从此处继续？'), findsOneWidget,
-          reason: '应显示确认提示文字');
+      expect(find.text('是否从此处继续？'), findsOneWidget, reason: '应显示确认提示文字');
 
       // Two action buttons
-      expect(find.text('从头播放'), findsOneWidget,
-          reason: '应有从头播放按钮');
+      expect(find.text('从头播放'), findsOneWidget, reason: '应有从头播放按钮');
       expect(find.textContaining('继续播放'), findsWidgets,
           reason: '应有继续播放按钮（含倒计时）');
     });
@@ -665,8 +680,7 @@ void main() {
       await tester.tap(find.textContaining('继续播放'));
       await tester.pumpAndSettle();
 
-      expect(continueSelected, isTrue,
-          reason: '点击继续播放应返回 true');
+      expect(continueSelected, isTrue, reason: '点击继续播放应返回 true');
     });
 
     // ── PRG-T20: "从头播放" → start from 0, delete progress ───────────────
@@ -707,8 +721,7 @@ void main() {
       await tester.tap(find.text('从头播放'));
       await tester.pumpAndSettle();
 
-      expect(startOverSelected, isFalse,
-          reason: '点击从头播放应返回 false');
+      expect(startOverSelected, isFalse, reason: '点击从头播放应返回 false');
     });
 
     // ── PRG-T21: 5-second timeout auto-selects "继续播放" ──────────────────
@@ -790,8 +803,7 @@ void main() {
       await tester.pump();
 
       // Initial state: "继续播放 (5)"
-      expect(find.text('继续播放 (5)'), findsOneWidget,
-          reason: '初始应显示 "继续播放 (5)"');
+      expect(find.text('继续播放 (5)'), findsOneWidget, reason: '初始应显示 "继续播放 (5)"');
 
       // Advance 1 second
       await tester.pump(const Duration(seconds: 1));
@@ -806,8 +818,7 @@ void main() {
 
     // ── PRG-T23: Dialog time matches progress record ──────────────────────
 
-    test('PRG-T23: formatted time in dialog matches PlayProgress.position',
-        () {
+    test('PRG-T23: formatted time in dialog matches PlayProgress.position', () {
       final progress1 = _progress(positionMs: 90000); // 1:30
       expect(progress1.formattedPosition, equals('1:30'));
 
@@ -906,12 +917,10 @@ void main() {
 
       // Verify record is gone
       final afterDelete = await dao.find(1, '/music/to_clear.mp3');
-      expect(afterDelete, isNull,
-          reason: '清除后数据库中不应再有该文件的进度记录');
+      expect(afterDelete, isNull, reason: '清除后数据库中不应再有该文件的进度记录');
 
       final count = await dao.count();
-      expect(count, equals(0),
-          reason: '表中不应有记录');
+      expect(count, equals(0), reason: '表中不应有记录');
     });
 
     // ── PRG-T27: After clear → progress bar disappears ─────────────────────
@@ -929,16 +938,14 @@ void main() {
 
       // Before clear: progress exists → progress bar visible
       final before = await dao.find(1, '/music/visible.mp3');
-      expect(before, isNotNull,
-          reason: '清除前进度记录存在 → 进度条应显示');
+      expect(before, isNotNull, reason: '清除前进度记录存在 → 进度条应显示');
 
       // Clear
       await dao.delete(1, '/music/visible.mp3');
 
       // After clear: progress gone → progress bar hidden
       final after = await dao.find(1, '/music/visible.mp3');
-      expect(after, isNull,
-          reason: '清除后进度记录不存在 → 进度条应消失');
+      expect(after, isNull, reason: '清除后进度记录不存在 → 进度条应消失');
     });
 
     // ── PRG-T28: deleteProgress method directly ────────────────────────────
@@ -965,8 +972,7 @@ void main() {
         durationMs: 200000,
       );
 
-      expect(await dao.count(), equals(3),
-          reason: '初始应有 3 条记录');
+      expect(await dao.count(), equals(3), reason: '初始应有 3 条记录');
 
       // Delete only one specific record
       await dao.delete(1, '/music/remove.mp3');
@@ -981,8 +987,7 @@ void main() {
       expect(await dao.find(2, '/music/remove.mp3'), isNotNull,
           reason: '其他连接的记录不应受影响');
 
-      expect(await dao.count(), equals(2),
-          reason: '删除后应剩 2 条记录');
+      expect(await dao.count(), equals(2), reason: '删除后应剩 2 条记录');
     });
   });
 

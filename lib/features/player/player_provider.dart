@@ -18,6 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/services/audio_handler.dart';
 import '../../core/services/audio_source_builder.dart';
+import '../../shared/models/play_progress.dart';
 import '../../shared/models/play_queue.dart';
 import '../browser/browser_provider.dart';
 import '../connection/connection_provider.dart';
@@ -424,6 +425,38 @@ String formatDuration(Duration? duration) {
   return '$mm:$ss';
 }
 
+/// Normalizes a restored resume position before it is applied to the player.
+///
+/// Invalid values fall back to `0` so startup recovery never attempts to seek
+/// beyond the track duration and leave the player in a broken state.
+int sanitizeResumePosition(int positionMs, int? durationMs) {
+  if (positionMs < 0) return 0;
+  if (durationMs != null && durationMs > 0 && positionMs >= durationMs) {
+    return 0;
+  }
+  return positionMs;
+}
+
+/// Applies the latest saved progress to the current queue when it still points
+/// at the same file on the same active connection.
+PlayQueue? applyLatestProgressToQueue({
+  required PlayQueue? queue,
+  required int? activeConnectionId,
+  required PlayProgress? latestProgress,
+}) {
+  if (queue == null || activeConnectionId == null || latestProgress == null) {
+    return queue;
+  }
+  if (latestProgress.connectionId != activeConnectionId) return queue;
+  if (latestProgress.filePath != queue.current.path) return queue;
+  return queue.withStartPosition(
+    sanitizeResumePosition(
+      latestProgress.positionMs,
+      latestProgress.durationMs,
+    ),
+  );
+}
+
 // ── Background playback (PLY-03) ─────────────────────────────────────────────────
 
 /// Whether background audio playback is enabled.
@@ -436,6 +469,31 @@ String formatDuration(Duration? duration) {
 /// read by the app-lifecycle observer to decide whether to pause or
 /// continue playback on a lifecycle transition.
 final backgroundPlaybackEnabledProvider = StateProvider<bool>((ref) => true);
+
+/// Restores the latest saved playback position onto the persisted queue during
+/// app startup so pressing play resumes from the last known position.
+final restoreStartupProgressProvider = FutureProvider<void>((ref) async {
+  await ref.read(restoreQueueFromPrefsProvider.future);
+
+  final queue = ref.read(currentPlayQueueProvider);
+  final activeConn = ref.read(activeConnectionProvider).valueOrNull;
+  final latestProgress = await ref.read(latestPlayedProgressProvider.future);
+  final restoredQueue = applyLatestProgressToQueue(
+    queue: queue,
+    activeConnectionId: activeConn?.id,
+    latestProgress: latestProgress,
+  );
+
+  if (restoredQueue != null && restoredQueue != queue) {
+    ref.read(currentPlayQueueProvider.notifier).state = restoredQueue;
+    final player = ref.read(audioPlayerProvider);
+    if (player.audioSource != null) {
+      await player.seek(
+        Duration(milliseconds: restoredQueue.startPositionMs ?? 0),
+      );
+    }
+  }
+});
 
 /// Manages the background-playback state machine (PLY-T20~T23).
 ///
