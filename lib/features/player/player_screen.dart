@@ -869,13 +869,12 @@ class _PlayModeControl extends ConsumerWidget {
     final mode = ref.watch(playModeProvider);
     final nextMode = ref.watch(nextPlayModeProvider);
 
-    return OutlinedButton.icon(
+    return IconButton(
       onPressed: nextMode,
-      icon: Icon(iconForPlayMode(mode), size: 20),
-      label: Text(labelForPlayMode(mode)),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      ),
+      icon: Icon(iconForPlayMode(mode)),
+      iconSize: 20,
+      tooltip: labelForPlayMode(mode),
+      visualDensity: VisualDensity.compact,
     );
   }
 }
@@ -910,24 +909,22 @@ class _TimerControl extends ConsumerWidget {
     final isActive = state != null;
     final isAfterCurrent = state?.mode == TimerMode.afterCurrent;
 
-    String? displayText;
+    String? tooltip;
     if (isAfterCurrent) {
-      displayText = '播完停止';
+      tooltip = '播完停止';
     } else if (isActive) {
-      displayText = ref.watch(formattedRemainingProvider);
+      tooltip = ref.watch(formattedRemainingProvider);
     }
 
-    return OutlinedButton.icon(
+    return IconButton(
       onPressed: () => _showTimerSheet(context, isActive),
       icon: Icon(
         Icons.timer,
-        size: 20,
         color: isActive ? Theme.of(context).colorScheme.primary : null,
       ),
-      label: Text(displayText ?? '定时停止'),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      ),
+      iconSize: 20,
+      tooltip: tooltip ?? '定时停止',
+      visualDensity: VisualDensity.compact,
     );
   }
 
