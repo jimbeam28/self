@@ -45,9 +45,8 @@ final recentlyPlayedProvider =
 /// Returns the most recently played progress record, or `null` when none
 /// exists. Used during app startup to restore the current track's position.
 final latestPlayedProgressProvider = FutureProvider<PlayProgress?>((ref) async {
-  final records = await ref.watch(recentlyPlayedProvider(1).future);
-  if (records.isEmpty) return null;
-  return records.first;
+  final dao = ref.watch(progressDaoProvider);
+  return dao.findLatest();
 });
 
 /// Action provider: upserts (or clears) playback progress.
@@ -69,7 +68,7 @@ final upsertProgressProvider = Provider<
     int? durationMs,
   }) async {
     final dao = ref.read(progressDaoProvider);
-    await dao.upsert(
+    await dao.upsertLatest(
       connectionId: connectionId,
       filePath: filePath,
       positionMs: positionMs,
@@ -81,6 +80,7 @@ final upsertProgressProvider = Provider<
       filePath: filePath,
     )));
     ref.invalidate(recentlyPlayedProvider(null));
+    ref.invalidate(latestPlayedProgressProvider);
   };
 });
 
@@ -102,6 +102,7 @@ final clearProgressProvider = Provider<
       filePath: filePath,
     )));
     ref.invalidate(recentlyPlayedProvider(null));
+    ref.invalidate(latestPlayedProgressProvider);
   };
 });
 

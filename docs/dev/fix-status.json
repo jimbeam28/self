@@ -176,7 +176,7 @@
             "lib/features/browser/browser_screen.dart",
             "lib/features/player/player_provider.dart"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": ["A-2"]
         }
       }

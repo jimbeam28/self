@@ -555,6 +555,56 @@ void main() {
       final latest = await container.read(latestPlayedProgressProvider.future);
       expect(latest, isNull);
     });
+
+    test('findLatest prunes legacy multi-row history to a single latest row',
+        () async {
+      await dao.rawInsert(
+        _progress(
+          connectionId: 1,
+          filePath: '/music/older.mp3',
+          positionMs: 15000,
+          lastPlayedAt: DateTime(2026, 5, 17, 8, 0),
+        ),
+      );
+      await dao.rawInsert(
+        _progress(
+          connectionId: 2,
+          filePath: '/music/newer.mp3',
+          positionMs: 45000,
+          lastPlayedAt: DateTime(2026, 5, 17, 9, 0),
+        ),
+      );
+
+      final latest = await dao.findLatest();
+      expect(latest, isNotNull);
+      expect(latest!.filePath, equals('/music/newer.mp3'));
+      expect(await dao.count(), equals(1),
+          reason: '迁移到单活跃记录模型后应只保留最近一条进度');
+    });
+
+    test('upsertLatest replaces previous active progress record', () async {
+      await dao.upsertLatest(
+        connectionId: 1,
+        filePath: '/music/first.mp3',
+        positionMs: 15000,
+        durationMs: 180000,
+      );
+      await dao.upsertLatest(
+        connectionId: 1,
+        filePath: '/music/second.mp3',
+        positionMs: 25000,
+        durationMs: 200000,
+      );
+
+      expect(await dao.count(), equals(1),
+          reason: '单活跃模型下再次保存应替换旧记录而不是累积');
+      expect(await dao.find(1, '/music/first.mp3'), isNull);
+
+      final latest = await dao.findLatest();
+      expect(latest, isNotNull);
+      expect(latest!.filePath, equals('/music/second.mp3'));
+      expect(latest.positionMs, equals(25000));
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════════════════

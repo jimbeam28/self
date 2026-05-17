@@ -418,17 +418,22 @@ final loadProgressForDirectoryProvider =
   final contents = ref.read(directoryContentsProvider(path)).valueOrNull;
   if (contents == null) return;
 
-  // Query progress for each audio file
+  // C-4: only expose the single active progress record.
   final registry = <String, PlayProgress?>{};
+  PlayProgress? latest;
+  try {
+    latest = await dao.findLatest();
+  } catch (_) {
+    latest = null;
+  }
+
   for (final file in contents) {
     if (file.isDirectory) continue;
-    try {
-      final progress = await dao.find(activeConn.id!, file.path);
-      registry[file.path] = progress;
-    } catch (_) {
-      // DAO not available (e.g. in test without DB) — skip
-      registry[file.path] = null;
-    }
+    registry[file.path] = latest != null &&
+            latest.connectionId == activeConn.id &&
+            latest.filePath == file.path
+        ? latest
+        : null;
   }
 
   ref.read(_progressRegistryProvider.notifier).state = registry;

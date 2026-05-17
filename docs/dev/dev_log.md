@@ -1,5 +1,26 @@
 ---
 
+## [2026-05-17 18:06] C-4 - 精简进度持久化为单活跃记录并在启动恢复
+
+**优先级**: P2
+**关联问题**: 逐曲保存导致恢复复杂度过高
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/core/database/dao/progress_dao.dart` — 新增单活跃进度模型接口：保留最近一条、替换式写入、清空当前活跃进度
+- `lib/features/progress/progress_provider.dart` — 启用单活跃进度读写 provider，并刷新最新进度缓存
+- `lib/features/browser/browser_provider.dart` — 目录进度缓存改为只暴露当前活跃歌曲的进度，兼容旧多条记录迁移
+- `test/features/progress/prg_test.dart` — 补充旧多条记录迁移为单条最新记录、替换式写入单活跃记录的测试
+
+### 验证结果
+- 通过: 3 / 总计: 3（work_items 检查项）
+- `flutter test test/features/timer/timer_test.dart test/features/progress/prg_test.dart`：通过
+- `flutter analyze`：0 issues
+- `flutter test`：全量通过
+
+### 备注
+- 兼容策略采用“首次读取或写入时保留最近一条、清理其余旧记录”，避免旧版本遗留的逐曲进度继续干扰启动恢复和列表展示。
+
 ## [2026-05-17 18:06] C-3 - 自定义停止时长增加“上次时长”快捷项
 
 **优先级**: P2

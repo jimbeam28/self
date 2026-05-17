@@ -67,6 +67,61 @@ class ProgressDao {
     return true;
   }
 
+  /// Migrates legacy multi-row history into the new single-active model by
+  /// keeping only the most recently played record.
+  Future<void> migrateLegacyToLatest() async {
+    final db = await _db;
+    final rows = await db.query(
+      'play_progress',
+      columns: ['id'],
+      orderBy: 'last_played_at DESC',
+    );
+    if (rows.length <= 1) return;
+
+    final idsToDelete = rows.skip(1).map((row) => row['id'] as int).toList();
+    final placeholders = List.filled(idsToDelete.length, '?').join(',');
+    await db.delete(
+      'play_progress',
+      where: 'id IN ($placeholders)',
+      whereArgs: idsToDelete,
+    );
+  }
+
+  /// Saves only the currently active playback progress, replacing any older
+  /// records kept by the legacy per-file model.
+  Future<bool?> upsertLatest({
+    required int connectionId,
+    required String filePath,
+    required int positionMs,
+    int? durationMs,
+  }) async {
+    if (!shouldSave(positionMs)) return false;
+
+    if (shouldClear(positionMs, durationMs)) {
+      await clearLatest();
+      return null;
+    }
+
+    final db = await _db;
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    await db.transaction((txn) async {
+      await txn.delete('play_progress');
+      await txn.insert(
+        'play_progress',
+        {
+          'connection_id': connectionId,
+          'file_path': filePath,
+          'position_ms': positionMs,
+          'duration_ms': durationMs,
+          'last_played_at': now,
+        },
+      );
+    });
+
+    return true;
+  }
+
   // ── Query ────────────────────────────────────────────────────────────────────
 
   /// Inserts a [progress] record directly without [shouldSave] / [shouldClear]
@@ -104,6 +159,14 @@ class ProgressDao {
       limit: limit,
     );
     return rows.map(PlayProgress.fromMap).toList();
+  }
+
+  /// Returns the single active progress record after pruning legacy rows.
+  Future<PlayProgress?> findLatest() async {
+    await migrateLegacyToLatest();
+    final records = await getRecentlyPlayed(limit: 1);
+    if (records.isEmpty) return null;
+    return records.first;
   }
 
   /// Returns all progress records for a specific connection.
@@ -148,6 +211,12 @@ class ProgressDao {
     final result =
         await db.rawQuery('SELECT COUNT(*) as cnt FROM play_progress');
     return (result.first['cnt'] as int?) ?? 0;
+  }
+
+  /// Clears the current active progress record.
+  Future<void> clearLatest() async {
+    final db = await _db;
+    await db.delete('play_progress');
   }
 
   // ── Static helpers ───────────────────────────────────────────────────────────
