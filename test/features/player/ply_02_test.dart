@@ -222,10 +222,12 @@ void main() {
       final appBar = tester.widget<AppBar>(find.byType(AppBar));
       expect(appBar.actions, isNull, reason: 'AppBar 右上角不应再保留播放列表按钮');
 
-      final nextCenter = tester.getCenter(find.byIcon(Icons.skip_next));
+      // Queue button is now next to the play mode button (top row),
+      // not next to the next-track button (bottom row).
+      final modeButton = tester.getCenter(find.text(labelForPlayMode(PlayMode.sequential)));
       final queueCenter = tester.getCenter(find.byIcon(Icons.queue_music));
-      expect(queueCenter.dx, greaterThan(nextCenter.dx),
-          reason: '播放列表按钮应位于下一曲按钮右侧');
+      expect(queueCenter.dx, greaterThan(modeButton.dx),
+          reason: '播放列表按钮应位于顺序播放按钮右侧');
     });
   });
 

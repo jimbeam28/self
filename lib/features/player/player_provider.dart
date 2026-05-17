@@ -178,7 +178,9 @@ class SerializedRequestGate {
     _running = true;
     unawaited(() async {
       try {
-        final result = await request.task(request.requestId);
+        final result = await request
+            .task(request.requestId)
+            .timeout(const Duration(seconds: 15));
         request.complete(
             isLatest(request.requestId) ? result : request.onSuperseded());
       } catch (e) {
@@ -772,19 +774,26 @@ final Provider<Future<TrackLoadResult> Function()> loadAndPlayProvider =
       task: (requestId) async {
         final queue = ref.read(currentPlayQueueProvider);
         if (queue == null || queue.length == 0) {
+          debugPrint('[Provider] loadAndPlay: queue null/empty');
           return const TrackLoadResult.failed();
         }
 
         try {
+          debugPrint('[Provider] loadAndPlay: start file=${queue.current.path}');
           // E-2: if the connection has changed since the queue was created,
           // refuse to load — file paths may not exist on the new connection.
           final savedConnId = ref.read(lastQueueConnectionIdProvider);
           final activeConn = await ref.read(activeConnectionProvider.future);
-          if (activeConn == null) return const TrackLoadResult.failed();
+          if (activeConn == null) {
+            debugPrint('[Provider] loadAndPlay: no active connection');
+            return const TrackLoadResult.failed();
+          }
           if (savedConnId != null && activeConn.id != savedConnId) {
+            debugPrint('[Provider] loadAndPlay: connection changed');
             return const TrackLoadResult.failed();
           }
           if (!gate.isLatest(requestId)) {
+            debugPrint('[Provider] loadAndPlay: superseded before auth');
             return const TrackLoadResult.superseded();
           }
 
@@ -792,6 +801,7 @@ final Provider<Future<TrackLoadResult> Function()> loadAndPlayProvider =
           final password =
               await storage.read(key: 'connection_password_${activeConn.id}');
           if (password == null || password.isEmpty) {
+            debugPrint('[Provider] loadAndPlay: no password');
             return const TrackLoadResult.failed();
           }
           if (!gate.isLatest(requestId)) {
@@ -823,12 +833,15 @@ final Provider<Future<TrackLoadResult> Function()> loadAndPlayProvider =
           });
           ref.read(_processingSubProvider.notifier).state = sub;
 
+          debugPrint('[Provider] loadAndPlay: calling player.stop()');
           await player.stop();
           if (!gate.isLatest(requestId)) {
             return const TrackLoadResult.superseded();
           }
 
+          debugPrint('[Provider] loadAndPlay: calling setAudioSource');
           await player.setAudioSource(source);
+          debugPrint('[Provider] loadAndPlay: setAudioSource done');
 
           if (queue.startPositionMs != null) {
             await player.seek(Duration(milliseconds: queue.startPositionMs!));
@@ -851,7 +864,9 @@ final Provider<Future<TrackLoadResult> Function()> loadAndPlayProvider =
             return const TrackLoadResult.superseded();
           }
 
+          debugPrint('[Provider] loadAndPlay: calling play()');
           await player.play();
+          debugPrint('[Provider] loadAndPlay: play() done');
           if (!gate.isLatest(requestId)) {
             return const TrackLoadResult.superseded();
           }

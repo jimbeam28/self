@@ -56,14 +56,20 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final player = ref.read(audioPlayerProvider);
       final queue = ref.read(currentPlayQueueProvider);
+      debugPrint(
+        '[Player] postFrameCallback: queue=${queue?.current.path}, '
+        'hasSource=${player.sequenceState != null}',
+      );
       // Check if the player's loaded source still matches the current queue
       // entry.  When the user swipes back from the player and taps a different
       // song, the queue is updated but the player still holds the old source.
       final needsReload = queue != null && !_sourceMatchesQueue(player, queue);
       if (!needsReload &&
           (player.playing || player.processingState == ProcessingState.ready)) {
+        debugPrint('[Player] skipping load — source matches and player ready');
         setState(() => _loadState = PlayerLoadState.ready);
       } else {
+        debugPrint('[Player] calling _loadAndPlay, needsReload=$needsReload');
         _loadAndPlay();
       }
     });
@@ -153,12 +159,14 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   ) async {
     final queue = ref.read(currentPlayQueueProvider);
     if (queue == null || queue.length == 0) {
+      debugPrint('[Player] _runSerializedLoad: queue is null/empty');
       setState(() {
         _loadState = PlayerLoadState.error('没有选择播放文件');
       });
       return;
     }
 
+    debugPrint('[Player] _runSerializedLoad: setting loading, file=${queue.current.path}');
     setState(() => _loadState = PlayerLoadState.loading);
     final requestToken = ++_loadRequestToken;
 
@@ -167,6 +175,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
       try {
         loaded = await request().timeout(const Duration(seconds: 15));
       } on TimeoutException {
+        debugPrint('[Player] _runSerializedLoad: TIMEOUT token=$requestToken mounted=$mounted');
         if (!mounted || requestToken != _loadRequestToken) return;
         setState(() {
           _loadState = PlayerLoadState.error('加载超时，请重试');
@@ -174,18 +183,23 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
         return;
       }
 
+      debugPrint('[Player] _runSerializedLoad: result=${loaded.status} token=$requestToken');
       if (!mounted || requestToken != _loadRequestToken) return;
 
       if (loaded.isLoaded) {
+        debugPrint('[Player] _runSerializedLoad: → ready');
         setState(() => _loadState = PlayerLoadState.ready);
       } else if (loaded.isSuperseded) {
+        debugPrint('[Player] _runSerializedLoad: → superseded');
         setState(() {
           _loadState = PlayerLoadState.error('加载已被新的播放请求替换');
         });
       } else {
+        debugPrint('[Player] _runSerializedLoad: → failed, checking reason');
         // Determine the specific error reason from provider state.
         final activeConn = ref.read(activeConnectionProvider).valueOrNull;
         if (activeConn == null) {
+          debugPrint('[Player] error: no active connection');
           setState(() {
             _loadState = PlayerLoadState.error('没有活跃的连接', isAuthError: true);
           });
@@ -195,16 +209,19 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
         final pw =
             await storage.read(key: 'connection_password_${activeConn.id}');
         if (pw == null || pw.isEmpty) {
+          debugPrint('[Player] error: no password');
           setState(() {
             _loadState = PlayerLoadState.error('密码未保存', isAuthError: true);
           });
         } else {
+          debugPrint('[Player] error: generic load failure');
           setState(() {
             _loadState = PlayerLoadState.error('加载失败');
           });
         }
       }
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[Player] _runSerializedLoad: unexpected error $e\n$st');
       if (!mounted) return;
       setState(() {
         _loadState = PlayerLoadState.error('加载失败');
@@ -357,13 +374,14 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
                 ?.copyWith(color: Colors.grey),
           ),
           const SizedBox(height: 16),
-          // Speed + Timer + Play mode — grouped above the progress bar
-          const Row(
+          // Speed + Timer + Play mode + Queue — grouped above the progress bar
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _SpeedControl(),
-              _TimerControl(),
-              _PlayModeControl(),
+              const _SpeedControl(),
+              const _TimerControl(),
+              const _PlayModeControl(),
+              _QueueButton(onTap: () => _showQueueSheet(context, playQueue)),
             ],
           ),
           const SizedBox(height: 16),
@@ -374,9 +392,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
           _PlaybackControls(
             onPrevious: _playPrevious,
             onNext: _playNext,
-            onShowQueue: playQueue == null
-                ? null
-                : () => _showQueueSheet(context, playQueue),
           ),
           const Spacer(),
         ],
@@ -581,12 +596,10 @@ class _ProgressSliderState extends ConsumerState<_ProgressSlider> {
 class _PlaybackControls extends ConsumerWidget {
   final VoidCallback? onPrevious;
   final VoidCallback? onNext;
-  final VoidCallback? onShowQueue;
 
   const _PlaybackControls({
     this.onPrevious,
     this.onNext,
-    this.onShowQueue,
   });
 
   @override
@@ -670,13 +683,6 @@ class _PlaybackControls extends ConsumerWidget {
           tooltip: '下一首',
           enabled: nextIdx != null,
           onPressed: nextIdx != null ? onNext : null,
-        ),
-        const SizedBox(width: 8),
-        _buildSkipButton(
-          icon: Icons.queue_music,
-          tooltip: '播放列表',
-          enabled: queue != null && queue.length > 0,
-          onPressed: queue != null && queue.length > 0 ? onShowQueue : null,
         ),
       ],
     );
@@ -861,6 +867,25 @@ class _PlayModeControl extends ConsumerWidget {
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
+    );
+  }
+}
+
+// ── Queue button ──────────────────────────────────────────────────────────────
+
+class _QueueButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _QueueButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onTap,
+      icon: const Icon(Icons.queue_music),
+      iconSize: 20,
+      tooltip: '播放列表',
+      visualDensity: VisualDensity.compact,
     );
   }
 }
