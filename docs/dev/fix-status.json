@@ -100,7 +100,7 @@
             "lib/features/player/player_screen.dart",
             "test/features/player/"
           ],
-          "impl_status": "pending",
+          "impl_status": "done",
           "dependencies": ["B-2"]
         }
       }

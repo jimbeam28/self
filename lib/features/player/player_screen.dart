@@ -43,6 +43,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   /// Tracks the source-load lifecycle: idle -> loading -> ready / error.
   PlayerLoadState _loadState = PlayerLoadState.idle;
   int _loadRequestToken = 0;
+  late ProviderContainer _container;
 
   Timer? _timerExpiryChecker;
 
@@ -92,25 +93,31 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _container = ProviderScope.containerOf(context);
+  }
+
+  @override
   void dispose() {
     // PRG-01 trigger ⑤: save progress on page destroy.
-    _saveProgress();
+    _saveProgressWithContainer(_container);
     // E-1: invalidate the progress cache so the Browser sees the latest
     // position if the user taps the same file again after coming back.
-    final queue = ref.read(currentPlayQueueProvider);
+    final queue = _container.read(currentPlayQueueProvider);
     if (queue != null) {
       final parentDir = _parentDir(queue.current.path);
       if (parentDir.isNotEmpty) {
-        ref.invalidate(loadProgressForDirectoryProvider(parentDir));
+        _container.invalidate(loadProgressForDirectoryProvider(parentDir));
       }
     }
     _timerExpiryChecker?.cancel();
     // D-1: cancel background listeners managed by providers.
-    ref.read(cancelPlaybackSubscriptionsProvider)();
+    _container.read(cancelPlaybackSubscriptionsProvider)();
     WidgetsBinding.instance.removeObserver(this);
 
     // A-1: clear handler callbacks to prevent stale references.
-    final handler = ref.read(audioHandlerProvider);
+    final handler = _container.read(audioHandlerProvider);
     if (handler != null) {
       handler.onSkipToNextRequested = null;
       handler.onSkipToPreviousRequested = null;
@@ -245,11 +252,15 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   /// ① 10-second periodic timer, ② pause, ③ track change,
   /// ④ app background, ⑤ dispose.
   void _saveProgress() {
-    final queue = ref.read(currentPlayQueueProvider);
-    final conn = ref.read(activeConnectionProvider).valueOrNull;
+    _saveProgressWithContainer(_container);
+  }
+
+  void _saveProgressWithContainer(ProviderContainer container) {
+    final queue = container.read(currentPlayQueueProvider);
+    final conn = container.read(activeConnectionProvider).valueOrNull;
     if (queue == null || conn?.id == null) return;
-    final player = ref.read(audioPlayerProvider);
-    ref.read(upsertProgressProvider)(
+    final player = container.read(audioPlayerProvider);
+    container.read(upsertProgressProvider)(
       connectionId: conn!.id!,
       filePath: queue.current.path,
       positionMs: player.position.inMilliseconds,
@@ -271,14 +282,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
               : '播放器',
         ),
         centerTitle: true,
-        actions: [
-          if (_loadState.status == PlayerLoadStatus.ready && queue != null)
-            IconButton(
-              icon: const Icon(Icons.queue_music),
-              tooltip: '播放队列',
-              onPressed: () => _showQueueSheet(context, queue),
-            ),
-        ],
       ),
       body: _buildBody(queue),
     );
@@ -363,6 +366,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
           _PlaybackControls(
             onPrevious: _playPrevious,
             onNext: _playNext,
+            onShowQueue: playQueue == null
+                ? null
+                : () => _showQueueSheet(context, playQueue),
           ),
           const Spacer(),
         ],
@@ -567,8 +573,13 @@ class _ProgressSliderState extends ConsumerState<_ProgressSlider> {
 class _PlaybackControls extends ConsumerWidget {
   final VoidCallback? onPrevious;
   final VoidCallback? onNext;
+  final VoidCallback? onShowQueue;
 
-  const _PlaybackControls({this.onPrevious, this.onNext});
+  const _PlaybackControls({
+    this.onPrevious,
+    this.onNext,
+    this.onShowQueue,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -653,6 +664,13 @@ class _PlaybackControls extends ConsumerWidget {
           tooltip: '下一首',
           enabled: nextIdx != null,
           onPressed: nextIdx != null ? onNext : null,
+        ),
+        const SizedBox(width: 8),
+        _buildSkipButton(
+          icon: Icons.queue_music,
+          tooltip: '播放列表',
+          enabled: queue != null && queue.length > 0,
+          onPressed: queue != null && queue.length > 0 ? onShowQueue : null,
         ),
       ],
     );

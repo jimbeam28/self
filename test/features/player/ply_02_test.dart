@@ -20,7 +20,43 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:mockito/mockito.dart';
+import 'package:nas_audio_player/features/browser/browser_provider.dart';
+import 'package:nas_audio_player/features/player/player_screen.dart';
 import 'package:nas_audio_player/features/player/player_provider.dart';
+import 'package:nas_audio_player/shared/models/nas_file.dart';
+import 'package:nas_audio_player/shared/models/play_queue.dart';
+
+import 'ply_08_test.mocks.dart';
+
+NasFile _audio(String name, String path) {
+  return NasFile(
+    name: name,
+    path: path,
+    isDirectory: false,
+    audioType: AudioFileType.music,
+  );
+}
+
+Widget _wrapPlayerScreen({
+  required AudioPlayer player,
+  required PlayQueue queue,
+  int seekStep = 15,
+}) {
+  return ProviderScope(
+    overrides: [
+      audioPlayerProvider.overrideWith((ref) => player),
+      audioHandlerProvider.overrideWith((ref) => null),
+      currentPlayQueueProvider.overrideWith((ref) => queue),
+      seekStepProvider.overrideWith((ref) => seekStep),
+      loadAndPlayProvider.overrideWith(
+        (ref) => () async => TrackLoadResult.loaded(player),
+      ),
+    ],
+    child: const MaterialApp(home: PlayerScreen()),
+  );
+}
 
 // ═════════════════════════════════════════════════════════════════════════════
 // Unit tests — PLY-T08~T19
@@ -145,6 +181,51 @@ void main() {
       expect(await second, equals('superseded'), reason: '排队中的旧请求应在开始前直接丢弃');
       expect(await third, equals('third'));
       expect(started, equals(['first', 'third']));
+    });
+  });
+
+  group('B-3: queue button placement on player screen', () {
+    testWidgets('queue button is rendered beside next button, not in AppBar',
+        (tester) async {
+      final player = MockAudioPlayer();
+
+      when(player.positionStream)
+          .thenAnswer((_) => Stream.value(const Duration(seconds: 12)));
+      when(player.durationStream)
+          .thenAnswer((_) => Stream.value(const Duration(minutes: 3)));
+      when(player.playerStateStream).thenAnswer(
+        (_) => Stream.value(PlayerState(false, ProcessingState.ready)),
+      );
+      when(player.speedStream).thenAnswer((_) => Stream.value(1.0));
+      when(player.position).thenReturn(const Duration(seconds: 12));
+      when(player.duration).thenReturn(const Duration(minutes: 3));
+      when(player.sequenceState).thenReturn(null);
+
+      final queue = PlayQueue(
+        files: [
+          _audio('first.mp3', '/music/first.mp3'),
+          _audio('second.mp3', '/music/second.mp3'),
+        ],
+        currentIndex: 0,
+      );
+
+      await tester.pumpWidget(
+        _wrapPlayerScreen(player: player, queue: queue),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.byType(AppBar), findsOneWidget);
+      expect(find.byIcon(Icons.queue_music), findsOneWidget);
+      expect(find.byTooltip('播放列表'), findsOneWidget);
+
+      final appBar = tester.widget<AppBar>(find.byType(AppBar));
+      expect(appBar.actions, isNull, reason: 'AppBar 右上角不应再保留播放列表按钮');
+
+      final nextCenter = tester.getCenter(find.byIcon(Icons.skip_next));
+      final queueCenter = tester.getCenter(find.byIcon(Icons.queue_music));
+      expect(queueCenter.dx, greaterThan(nextCenter.dx),
+          reason: '播放列表按钮应位于下一曲按钮右侧');
     });
   });
 

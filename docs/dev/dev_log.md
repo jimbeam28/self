@@ -1,5 +1,24 @@
 ---
 
+## [2026-05-17 17:41] B-3 - 将播放列表按钮迁移到下一曲右侧
+
+**优先级**: P1
+**关联问题**: 布局调整
+**状态**: ✅ 成功
+
+### 修改文件
+- `lib/features/player/player_screen.dart` — 删除 AppBar 右上角队列按钮，并将播放列表入口迁移到播放控制条中下一曲按钮右侧
+- `test/features/player/ply_02_test.dart` — 新增全屏播放器布局测试，断言播放列表按钮不再出现在 AppBar 且位于下一曲右侧
+
+### 验证结果
+- 通过: 3 / 总计: 3（work_items 检查项）
+- `flutter test test/features/player/ply_02_test.dart`：通过
+- `flutter analyze`：0 issues
+- `flutter test`：全量通过
+
+### 备注
+- 同时修正了 `PlayerScreen.dispose()` 对 `ref` 的销毁期读取，改为使用缓存的 `ProviderContainer`，避免页面销毁时出现 Riverpod 生命周期错误。
+
 ## [2026-05-17 17:24] B-2 - 队列弹窗改为可滚动列表（全屏与迷你栏）
 
 **优先级**: P1
