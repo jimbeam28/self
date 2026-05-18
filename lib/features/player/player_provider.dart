@@ -178,9 +178,7 @@ class SerializedRequestGate {
     _running = true;
     unawaited(() async {
       try {
-        final result = await request
-            .task(request.requestId)
-            .timeout(const Duration(seconds: 15));
+        final result = await request.task(request.requestId);
         request.complete(
             isLatest(request.requestId) ? result : request.onSuperseded());
       } catch (e) {
@@ -865,7 +863,23 @@ final Provider<Future<TrackLoadResult> Function()> loadAndPlayProvider =
           }
 
           debugPrint('[Provider] loadAndPlay: calling play()');
-          await player.play();
+          try {
+            await player.play().timeout(const Duration(seconds: 8));
+          } on TimeoutException {
+            // just_audio may have started playback on the native side but
+            // failed to deliver the platform-channel response back to Dart,
+            // especially when AudioService.init also failed.  If the player
+            // reports it is already playing, treat the load as successful
+            // instead of stopping audio the user can already hear.
+            if (player.playing) {
+              debugPrint('[Provider] loadAndPlay: play() timed out but player'
+                  ' reports playing — treating as success');
+            } else {
+              debugPrint('[Provider] loadAndPlay: play() timed out, stopping');
+              await player.stop();
+              return const TrackLoadResult.failed();
+            }
+          }
           debugPrint('[Provider] loadAndPlay: play() done');
           if (!gate.isLatest(requestId)) {
             return const TrackLoadResult.superseded();

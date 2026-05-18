@@ -210,8 +210,10 @@ class _OnboardingPage extends ConsumerWidget {
               // CON-T15: validation succeeded (or no active connection) — go to browser
               // A-2: restore persisted queue, then patch in the latest
               // saved playback position for the current track.
-              ref.read(restoreStartupProgressProvider);
+              // Triggered in post-frame callback to avoid Riverpod assertion:
+              // providers must not modify other providers during their build.
               WidgetsBinding.instance.addPostFrameCallback((_) {
+                ref.read(restoreStartupProgressProvider);
                 context.go('/browser');
               });
               return const Scaffold(
