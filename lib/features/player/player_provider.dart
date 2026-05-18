@@ -878,24 +878,24 @@ final Provider<Future<TrackLoadResult> Function()> loadAndPlayProvider =
           }
 
           debugPrint('[Provider] loadAndPlay: calling play()');
-          try {
-            await player.play().timeout(const Duration(seconds: 8));
-          } on TimeoutException {
-            // just_audio may have started playback on the native side but
-            // failed to deliver the platform-channel response back to Dart,
-            // especially when AudioService.init also failed.  If the player
-            // reports it is already playing, treat the load as successful
-            // instead of stopping audio the user can already hear.
+          // A-4: Don't await play() — its Future may never complete due to
+          // platform-channel contention with audio_service.  Instead poll
+          // player.playing so the UI shows controls as soon as audio starts.
+          unawaited(player.play());
+          var playStarted = false;
+          for (int i = 0; i < 40; i++) {
+            await Future<void>.delayed(const Duration(milliseconds: 200));
             if (player.playing) {
-              debugPrint('[Provider] loadAndPlay: play() timed out but player'
-                  ' reports playing — treating as success');
-            } else {
-              debugPrint('[Provider] loadAndPlay: play() timed out, stopping');
-              await player.stop();
-              return const TrackLoadResult.failed();
+              playStarted = true;
+              break;
             }
           }
-          debugPrint('[Provider] loadAndPlay: play() done');
+          if (!playStarted) {
+            debugPrint('[Provider] loadAndPlay: play() never started');
+            await player.stop();
+            return const TrackLoadResult.failed();
+          }
+          debugPrint('[Provider] loadAndPlay: player now playing');
           if (!gate.isLatest(requestId)) {
             return const TrackLoadResult.superseded();
           }
