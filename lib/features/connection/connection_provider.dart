@@ -3,6 +3,7 @@
 // Written without code generation — uses StateNotifier / AsyncNotifier patterns
 // from flutter_riverpod directly (no @riverpod annotations, no build_runner).
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -82,6 +83,7 @@ class ConnectionValidatorNotifier
   }) async {
     if (state is ValidationLoading) return; // re-entry guard
     state = const ValidationLoading();
+    debugPrint('[Conn] validating: url=$url basePath=$basePath');
     final normalisedUrl = normaliseWebDavUrl(url);
     final result = await _client.validate(
       url: normalisedUrl,
@@ -89,6 +91,7 @@ class ConnectionValidatorNotifier
       password: password,
       basePath: basePath,
     );
+    debugPrint('[Conn] validation result: ${result.status}');
     if (result.isSuccess) {
       state = const ValidationSuccess();
     } else {
@@ -120,26 +123,37 @@ final connectionValidatorProvider = StateNotifierProvider<
 final startupValidationProvider =
     FutureProvider<WebDavValidationResult?>((ref) async {
   final activeConn = await ref.watch(activeConnectionProvider.future);
-  if (activeConn == null) return null;
+  if (activeConn == null) {
+    debugPrint('[Conn] startupValidation: no active connection');
+    return null;
+  }
   // H-7: guard against null connection id from corrupted DB records.
-  if (activeConn.id == null) return WebDavValidationResult.authError();
+  if (activeConn.id == null) {
+    debugPrint('[Conn] startupValidation: null connection id');
+    return WebDavValidationResult.authError();
+  }
+
+  debugPrint('[Conn] startupValidation: checking id=${activeConn.id} url=${activeConn.url}');
 
   // Read the password from secure storage
   final storage = ref.watch(secureStorageProvider);
   final passwordKey = 'connection_password_${activeConn.id}';
   final password = await storage.read(key: passwordKey);
   if (password == null || password.isEmpty) {
+    debugPrint('[Conn] startupValidation: no password');
     return WebDavValidationResult.authError();
   }
 
   // Run validation silently (no connectionValidatorProvider state changes)
   final client = ref.watch(webDavClientProvider);
-  return client.validate(
+  final result = await client.validate(
     url: activeConn.url,
     username: activeConn.username,
     password: password,
     basePath: activeConn.basePath,
   );
+  debugPrint('[Conn] startupValidation result: ${result.status}');
+  return result;
 });
 
 // ── Switch active connection ────────────────────────────────────────────────────
@@ -150,9 +164,11 @@ final startupValidationProvider =
 final switchActiveConnectionProvider =
     FutureProvider.family<void, int>((ref, id) async {
   final dao = ref.watch(connectionDaoProvider);
+  debugPrint('[Conn] switch: id=$id');
   await dao.setActive(id);
   ref.invalidate(activeConnectionProvider);
   ref.invalidate(connectionListProvider);
+  debugPrint('[Conn] switch: done id=$id');
 });
 
 // ── Save connection use-case ──────────────────────────────────────────────────
@@ -179,6 +195,7 @@ class ConnectionSaver {
 
     // Insert with temp key to get the AUTOINCREMENT id
     final id = await _dao.insert(config, passwordKey: tempKey);
+    debugPrint('[Conn] save: inserted id=$id name=${config.name}');
 
     // Persist password under the permanent key
     final permanentKey = 'connection_password_$id';
@@ -186,6 +203,7 @@ class ConnectionSaver {
       await _storage.write(key: permanentKey, value: password);
     } catch (_) {
       // H-1: rollback the DB insert if secure-storage write fails.
+      debugPrint('[Conn] save: secure-storage write failed, rolling back');
       await _dao.delete(id);
       rethrow;
     }
@@ -196,6 +214,7 @@ class ConnectionSaver {
 
     // Mark as active (clears any previous active flag)
     await _dao.setActive(id);
+    debugPrint('[Conn] save: done id=$id');
 
     return savedConfig;
   }
@@ -230,8 +249,10 @@ class ConnectionUpdater {
     if (password != null && password.isNotEmpty) {
       await _storage.write(key: permanentKey, value: password);
     }
+    debugPrint('[Conn] update: id=${config.id} name=${config.name}');
 
     await _dao.update(config, passwordKey: permanentKey);
+    debugPrint('[Conn] update: done id=${config.id}');
   }
 }
 
@@ -256,10 +277,12 @@ final deleteConnectionProvider = FutureProvider.family<void, int>((ref, id) asyn
   final dao = ref.watch(connectionDaoProvider);
   final storage = ref.watch(secureStorageProvider);
 
+  debugPrint('[Conn] delete: id=$id');
   await dao.delete(id);
 
   // Remove the password from secure storage (CON-T31)
   await storage.delete(key: 'connection_password_$id');
+  debugPrint('[Conn] delete: done id=$id');
 
   ref.invalidate(activeConnectionProvider);
   ref.invalidate(connectionListProvider);

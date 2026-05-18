@@ -10,6 +10,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/dao/progress_dao.dart';
@@ -68,6 +69,8 @@ final upsertProgressProvider = Provider<
     int? durationMs,
   }) async {
     final dao = ref.read(progressDaoProvider);
+    debugPrint('[Progress] upsert: file=$filePath pos=${positionMs}ms'
+        ' dur=${durationMs ?? 'null'}ms');
     await dao.upsertLatest(
       connectionId: connectionId,
       filePath: filePath,
@@ -95,6 +98,7 @@ final clearProgressProvider = Provider<
     required String filePath,
   }) async {
     final dao = ref.read(progressDaoProvider);
+    debugPrint('[Progress] clear: file=$filePath');
     await dao.delete(connectionId, filePath);
     // Invalidate so the UI refreshes
     ref.invalidate(progressForFileProvider((
@@ -162,6 +166,7 @@ class ProgressResumeNotifier extends StateNotifier<ProgressResumeState?> {
   /// Shows the resume dialog with [progress] and starts the countdown.
   void show(PlayProgress progress) {
     _cancelTimer();
+    debugPrint('[Progress] resumeDialog: show ${progress.formattedPosition}');
     state = ProgressResumeState(progress: progress);
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {

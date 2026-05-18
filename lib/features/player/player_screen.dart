@@ -93,6 +93,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   // ── PRG-01 trigger ④: save progress when app goes to background ───────────
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    debugPrint('[Player] lifecycle: $state');
     if (state == AppLifecycleState.paused) {
       _saveProgress();
     }

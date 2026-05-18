@@ -162,8 +162,10 @@ final directoryContentsProvider =
   final cacheKey = '${activeConn.id}:$path';
   if (cache.containsKey(cacheKey)) {
     // Re-sort with the current sort option (does not mutate cached list).
+    debugPrint('[Browser] dirContents: cache hit path=$path');
     return sortFiles(cache[cacheKey]!, sortOption);
   }
+  debugPrint('[Browser] dirContents: cache miss path=$path, fetching');
 
   // 3. Read the password from secure storage
   final storage = ref.watch(secureStorageProvider);
@@ -195,6 +197,8 @@ final directoryContentsProvider =
     if (entry.isDirectory) return true;
     return entry.audioType != null;
   }).toList();
+
+  debugPrint('[Browser] dirContents: path=$path total=${allEntries.length} filtered=${filtered.length}');
 
   // 6. Sort with current sort option
   final sorted = sortFiles(filtered, sortOption);
@@ -313,12 +317,14 @@ final persistQueueOnChangeProvider = Provider<void>((ref) {
     if (next == null) {
       prefs.remove(_queuePrefsKey);
       prefs.remove(_queueConnIdPrefsKey);
+      debugPrint('[Browser] persistQueue: cleared');
     } else {
       prefs.setString(_queuePrefsKey, jsonEncode(next.toMap()));
       final connId = ref.read(lastQueueConnectionIdProvider);
       if (connId != null) {
         prefs.setInt(_queueConnIdPrefsKey, connId);
       }
+      debugPrint('[Browser] persistQueue: saved ${next.length} tracks idx=${next.currentIndex}');
     }
   });
 });
@@ -354,6 +360,7 @@ final restoreQueueFromPrefsProvider =
       startPositionMs: startPositionMs,
       playMode: mode,
     );
+    debugPrint('[Browser] restoreQueue: ${queue.length} tracks idx=${currentIndex} mode=$mode');
     ref.read(currentPlayQueueProvider.notifier).state = queue;
 
     // F-2: check whether the connection has changed since the queue was saved.
@@ -362,6 +369,7 @@ final restoreQueueFromPrefsProvider =
     if (savedConnId != null && conn?.id != savedConnId) {
       // Connection changed — keep the queue for display but skip pre-loading.
       // The user needs to re-browse the directory on the new connection.
+      debugPrint('[Browser] restoreQueue: connection changed, skip pre-load');
       return;
     }
 
@@ -372,6 +380,7 @@ final restoreQueueFromPrefsProvider =
       final pw =
           await storage.read(key: 'connection_password_${conn.id}');
       if (pw != null && pw.isNotEmpty) {
+        debugPrint('[Browser] restoreQueue: pre-loading ${files[currentIndex].path}');
         final source = AudioSourceBuilder.buildWithBasePath(
           baseUrl: conn.url,
           filePath: files[currentIndex].path,
@@ -383,6 +392,7 @@ final restoreQueueFromPrefsProvider =
         if (startPositionMs != null) {
           await player.seek(Duration(milliseconds: startPositionMs));
         }
+        debugPrint('[Browser] restoreQueue: pre-load done');
       }
     }
   } catch (e) {

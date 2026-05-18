@@ -7,6 +7,7 @@
 //   - 连接: manage NAS connections
 //   - 关于: about page
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -60,13 +61,15 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/about'),
           ),
-          ListTile(
-            leading: const Icon(Icons.terminal),
-            title: const Text('查看运行日志'),
-            subtitle: const Text('在设备上排查问题时查看调试输出'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/logs'),
-          ),
+          // Only show log viewer in debug builds.
+          if (kDebugMode)
+            ListTile(
+              leading: const Icon(Icons.terminal),
+              title: const Text('查看运行日志'),
+              subtitle: const Text('在设备上排查问题时查看调试输出'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/logs'),
+            ),
         ],
       ),
     );

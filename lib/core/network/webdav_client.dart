@@ -5,9 +5,8 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:meta/meta.dart';
-
 import '../../shared/models/nas_file.dart';
 
 // ── Validation result ─────────────────────────────────────────────────────────
@@ -118,9 +117,11 @@ class WebDavClient implements WebDavClientInterface {
     required String password,
     String basePath = '/',
   }) async {
+    debugPrint('[WebDAV] validate: url=$url basePath=$basePath');
     // 1. Normalise and validate URL format
     final normalisedUrl = normaliseWebDavUrl(url);
     if (!isValidWebDavUrl(normalisedUrl)) {
+      debugPrint('[WebDAV] validate: invalid URL format');
       return WebDavValidationResult.networkError();
     }
 
@@ -168,12 +169,16 @@ class WebDavClient implements WebDavClientInterface {
             return WebDavValidationResult.networkError();
         }
       }();
+      debugPrint('[WebDAV] validate result: ${result.status}'
+          ' (HTTP ${streamedResponse.statusCode})');
       // G-5: drain the response body so the HTTP connection can be reused.
       await streamedResponse.stream.drain<void>();
       return result;
     } on TimeoutException {
+      debugPrint('[WebDAV] validate: timeout');
       return WebDavValidationResult.networkError();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[WebDAV] validate error: $e');
       return WebDavValidationResult.networkError();
     }
   }
@@ -187,6 +192,7 @@ class WebDavClient implements WebDavClientInterface {
     required String password,
     required String path,
   }) async {
+    debugPrint('[WebDAV] listDirectory: path=$path');
     // 1. Build the target URI
     final normalisedUrl = normaliseWebDavUrl(url);
     Uri targetUri;
@@ -224,6 +230,7 @@ class WebDavClient implements WebDavClientInterface {
 
       if (streamedResponse.statusCode == 401 ||
           streamedResponse.statusCode == 403) {
+        debugPrint('[WebDAV] listDirectory: auth error (HTTP ${streamedResponse.statusCode})');
         throw WebDavException(
           '用户名或密码错误',
           statusCode: streamedResponse.statusCode,
@@ -231,18 +238,23 @@ class WebDavClient implements WebDavClientInterface {
       }
 
       if (streamedResponse.statusCode != 207) {
+        debugPrint('[WebDAV] listDirectory: bad status ${streamedResponse.statusCode}');
         throw WebDavException(
           '服务器返回异常状态码 ${streamedResponse.statusCode}',
           statusCode: streamedResponse.statusCode,
         );
       }
 
-      return _parsePropfindResponse(body);
+      final result = _parsePropfindResponse(body);
+      debugPrint('[WebDAV] listDirectory: got ${result.length} entries');
+      return result;
     } on WebDavException {
       rethrow;
     } on TimeoutException {
+      debugPrint('[WebDAV] listDirectory: timeout');
       throw const WebDavException('连接超时');
     } catch (e) {
+      debugPrint('[WebDAV] listDirectory error: $e');
       throw WebDavException('无法连接到服务器：$e');
     }
   }

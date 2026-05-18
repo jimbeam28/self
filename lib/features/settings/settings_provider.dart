@@ -68,6 +68,7 @@ final themeModeProvider = Provider<ThemeMode>((ref) {
 /// [themeModeProvider] so that it re-reads the updated value.
 final setThemeModeProvider = Provider<void Function(ThemeMode)>((ref) {
   return (ThemeMode mode) {
+    debugPrint('[Settings] themeMode: ${mode.name}');
     final prefs = ref.read(sharedPreferencesProvider);
     setThemeMode(prefs, mode);
     ref.invalidate(themeModeProvider);
@@ -117,6 +118,7 @@ final rememberSpeedProvider = Provider<bool>((ref) {
 /// Persists the remember-speed preference.
 final setRememberSpeedProvider = Provider<void Function(bool)>((ref) {
   return (bool value) {
+    debugPrint('[Settings] rememberSpeed: $value');
     ref.read(sharedPreferencesProvider)?.setBool(_rememberSpeedKey, value);
     ref.invalidate(rememberSpeedProvider);
   };
@@ -136,6 +138,7 @@ final seekStepSettingProvider = Provider<int>((ref) {
 /// picks up the new value.
 final setSeekStepSettingProvider = Provider<void Function(int)>((ref) {
   return (int seconds) {
+    debugPrint('[Settings] seekStep: ${seconds}s');
     setSeekStep(ref.read(sharedPreferencesProvider), seconds);
     ref.invalidate(seekStepSettingProvider);
     // Also update the runtime seek step used by the player.

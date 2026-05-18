@@ -9,6 +9,7 @@
 //     for CON-01 scope; Browser landing is wired for BRW-01.
 
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,6 +34,7 @@ import 'features/settings/settings_provider.dart';
 NasAudioHandler? _audioHandler;
 
 void main() async {
+  debugPrint('[Init] app starting');
   WidgetsFlutterBinding.ensureInitialized();
   installLogBufferHook();
   final prefs = await SharedPreferences.getInstance();
@@ -41,6 +43,7 @@ void main() async {
   // Initialise the audio service.  On some devices / Android versions this
   // may fail — the app still works without background-playback support.
   try {
+    debugPrint('[Init] AudioService.init starting...');
     _audioHandler = await AudioService.init(
       builder: () => NasAudioHandler(audioPlayer),
       config: const AudioServiceConfig(
@@ -50,12 +53,14 @@ void main() async {
         androidStopForegroundOnPause: true,
       ),
     );
+    debugPrint('[Init] AudioService.init succeeded');
   } catch (e) {
     // The error is logged but the app continues — playback still works via
     // just_audio; only lock-screen / notification controls are missing.
-    debugPrint('AudioService.init failed: $e');
+    debugPrint('[Init] AudioService.init failed: $e');
     _audioHandler = null;
   }
+  debugPrint('[Init] ready, running app');
 
   runApp(
     ProviderScope(
@@ -124,11 +129,12 @@ final _router = GoRouter(
       name: 'about',
       builder: (context, state) => const AboutScreen(),
     ),
-    GoRoute(
-      path: '/logs',
-      name: 'logs',
-      builder: (context, state) => const LogViewerScreen(),
-    ),
+    if (kDebugMode)
+      GoRoute(
+        path: '/logs',
+        name: 'logs',
+        builder: (context, state) => const LogViewerScreen(),
+      ),
   ],
 );
 

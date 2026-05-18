@@ -296,6 +296,7 @@ final nextPlayModeProvider = Provider<PlayMode Function()>((ref) {
   return () {
     final current = ref.read(playModeProvider);
     final next = PlayMode.values[(current.index + 1) % PlayMode.values.length];
+    debugPrint('[Player] playMode: ${current.name} → ${next.name}');
     ref.read(playModeProvider.notifier).state = next;
     return next;
   };
@@ -381,6 +382,7 @@ final defaultSpeedProvider = Provider<double>((ref) {
 final setDefaultSpeedProvider = Provider<void Function(double)>((ref) {
   return (double speed) {
     if (!isValidSpeed(speed)) return;
+    debugPrint('[Settings] defaultSpeed: ${speed}x');
     final prefs = ref.read(sharedPreferencesProvider);
     prefs?.setDouble(_defaultSpeedKey, speed);
     ref.invalidate(defaultSpeedProvider);
@@ -693,7 +695,11 @@ final Provider<Future<TrackLoadResult> Function()> skipToNextProvider =
     final mode = ref.read(playModeProvider);
     if (queue == null) return const TrackLoadResult.failed();
     final nextIdx = PlayQueue.nextIndex(queue.currentIndex, queue.length, mode);
-    if (nextIdx == null) return const TrackLoadResult.failed();
+    if (nextIdx == null) {
+      debugPrint('[Player] skipNext: no next track (mode=$mode)');
+      return const TrackLoadResult.failed();
+    }
+    debugPrint('[Player] skipNext: idx=$nextIdx file=${queue.files[nextIdx].path}');
     ref.read(saveProgressProvider)();
     final nextQueue = queue.withIndex(nextIdx);
     ref.read(currentPlayQueueProvider.notifier).state = nextQueue;
@@ -711,7 +717,11 @@ final skipToPreviousProvider =
     if (queue == null) return const TrackLoadResult.failed();
     final prevIdx =
         PlayQueue.previousIndex(queue.currentIndex, queue.length, mode);
-    if (prevIdx == null) return const TrackLoadResult.failed();
+    if (prevIdx == null) {
+      debugPrint('[Player] skipPrev: no previous track (mode=$mode)');
+      return const TrackLoadResult.failed();
+    }
+    debugPrint('[Player] skipPrev: idx=$prevIdx file=${queue.files[prevIdx].path}');
     ref.read(saveProgressProvider)();
     final prevQueue = queue.withIndex(prevIdx);
     ref.read(currentPlayQueueProvider.notifier).state = prevQueue;
@@ -729,8 +739,10 @@ final selectQueueIndexProvider =
       return const TrackLoadResult.failed();
     }
     if (index == queue.currentIndex) {
+      debugPrint('[Player] selectIndex: already at idx=$index');
       return const TrackLoadResult.failed();
     }
+    debugPrint('[Player] selectIndex: idx=$index file=${queue.files[index].path}');
     ref.read(saveProgressProvider)();
     ref.read(currentPlayQueueProvider.notifier).state = queue.withIndex(index);
     return ref.read(loadAndPlayProvider)();
@@ -821,10 +833,13 @@ final Provider<Future<TrackLoadResult> Function()> loadAndPlayProvider =
           ref.read(cancelProcessingListenerProvider)();
           final sub = player.processingStateStream.listen((state) {
             if (state == ProcessingState.completed) {
+              debugPrint('[Player] track completed');
               final triggered = ref.read(onTrackCompletedProvider)();
               if (triggered) {
+                debugPrint('[Player] afterCurrent timer triggered, pausing');
                 player.pause();
               } else {
+                debugPrint('[Player] advancing to next track');
                 advanceToNext();
               }
             }

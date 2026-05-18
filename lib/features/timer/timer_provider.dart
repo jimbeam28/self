@@ -16,6 +16,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../browser/browser_provider.dart';
@@ -133,6 +134,7 @@ final formattedRemainingProvider = Provider<String?>((ref) {
 /// Usage: `ref.read(startDurationTimerProvider)(5)` for 5 minutes.
 final startDurationTimerProvider = Provider<void Function(int minutes)>((ref) {
   return (int minutes) {
+    debugPrint('[Timer] startDuration: ${minutes}min');
     final service = ref.read(timerServiceProvider);
     service.startDuration(minutes);
     ref.read(setLastCustomTimerMinutesProvider)(minutes);
@@ -144,6 +146,7 @@ final startDurationTimerProvider = Provider<void Function(int minutes)>((ref) {
 /// Provider of the [VoidCallback] to set after-current mode (TMR-02).
 final startAfterCurrentProvider = Provider<void Function()>((ref) {
   return () {
+    debugPrint('[Timer] startAfterCurrent');
     final service = ref.read(timerServiceProvider);
     service.startAfterCurrent();
     ref.invalidate(timerStateProvider);
@@ -154,6 +157,7 @@ final startAfterCurrentProvider = Provider<void Function()>((ref) {
 /// Provider of the [VoidCallback] to cancel the active timer (TMR-04).
 final cancelTimerProvider = Provider<void Function()>((ref) {
   return () {
+    debugPrint('[Timer] cancel');
     final service = ref.read(timerServiceProvider);
     service.cancel();
     ref.invalidate(timerStateProvider);
@@ -171,6 +175,7 @@ final checkTimerExpiryProvider = Provider<bool Function()>((ref) {
     final service = ref.read(timerServiceProvider);
     final expired = service.checkExpired();
     if (expired) {
+      debugPrint('[Timer] expired, pausing');
       ref.invalidate(timerStateProvider);
       ref.invalidate(remainingTimeProvider);
     }
@@ -187,6 +192,7 @@ final onTrackCompletedProvider = Provider<bool Function()>((ref) {
     final service = ref.read(timerServiceProvider);
     final triggered = service.onTrackCompleted();
     if (triggered) {
+      debugPrint('[Timer] afterCurrent completed, triggering stop');
       ref.invalidate(timerStateProvider);
       ref.invalidate(remainingTimeProvider);
     }

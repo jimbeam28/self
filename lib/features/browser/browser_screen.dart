@@ -144,6 +144,7 @@ class BrowserScreen extends ConsumerWidget {
                             .push(dirPath);
                       },
                       onFileTap: (tappedFile) async {
+                        debugPrint('[Browser] onFileTap: ${tappedFile.path}');
                         // BRW-04: Build play queue from current directory.
                         // Re-read the cached contents so we have the full
                         // filtered/sorted list (the UI may show a subset).
@@ -157,6 +158,8 @@ class BrowserScreen extends ConsumerWidget {
                         final startIndex = audioFiles
                             .indexWhere((f) => f.path == tappedFile.path);
                         if (startIndex < 0) return;
+
+                        debugPrint('[Browser] onFileTap: queue ${audioFiles.length} tracks idx=$startIndex');
 
                         // Lazily resolve GoRouter — only needed when the user
                         // actually taps a file.
