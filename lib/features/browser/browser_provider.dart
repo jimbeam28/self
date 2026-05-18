@@ -360,7 +360,8 @@ final restoreQueueFromPrefsProvider =
       startPositionMs: startPositionMs,
       playMode: mode,
     );
-    debugPrint('[Browser] restoreQueue: ${queue.length} tracks idx=${currentIndex} mode=$mode');
+    final trackCount = files.length;
+    debugPrint('[Browser] restoreQueue: $trackCount tracks idx=$currentIndex mode=$mode');
     ref.read(currentPlayQueueProvider.notifier).state = queue;
 
     // F-2: check whether the connection has changed since the queue was saved.
